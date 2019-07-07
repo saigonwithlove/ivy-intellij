@@ -1,0 +1,26 @@
+<idea-plugin>
+  <id>saigonwithlove.ivy.intellij</id>
+  <name>Ivy</name>
+  <vendor email="cavoirom@gmail.com" url="https://github.com/saigonwithlove">Saigon with love</vendor>
+
+  <description><![CDATA[
+    Unofficial Axon.ivy Framework Plugin for Ivy development on IntelliJ.
+    ]]></description>
+
+  <!-- please see http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/plugin_compatibility.html
+       on how to target different products -->
+  <!-- uncomment to enable plugin in all products
+  <depends>com.intellij.modules.lang</depends>
+  -->
+
+  <extensions defaultExtensionNs="com.intellij">
+    <projectService serviceImplementation="saigonwithlove.ivy.intellij.shared.PreferenceService"/>
+    <projectService serviceImplementation="saigonwithlove.ivy.intellij.engine.IvyEngineService"/>
+    <toolWindow id="Ivy" icon="/icons/ivyToolWindow.svg" anchor="bottom"
+                factoryClass="saigonwithlove.ivy.intellij.toolwindow.IvyToolWindowFactory"/>
+  </extensions>
+
+  <actions>
+    <!-- Add your actions here -->
+  </actions>
+</idea-plugin>
