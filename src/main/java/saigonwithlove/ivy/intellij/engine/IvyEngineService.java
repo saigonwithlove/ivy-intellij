@@ -15,6 +15,7 @@ import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.vfs.VirtualFile;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -89,6 +90,8 @@ public class IvyEngineService {
         "WS_PROCESS_CONTAINER",
         getLibraryPaths(ivyEngineDirectory, WEB_SERVICE_PROCESS_PATHS),
         null);
+    addLibrary(
+        libraryTable, "org.eclipse.jst.j2ee.internal.web.container", Collections.emptyList(), null);
   }
 
   private void addLibrary(
@@ -99,7 +102,7 @@ public class IvyEngineService {
     Library.ModifiableModel modifiableModel =
         getOrCreateLibrary(libraryTable, libraryName).getModifiableModel();
     getJars(libraryPaths, excludePaths)
-        .forEach(jar -> modifiableModel.addRoot(jar, OrderRootType.CLASSES));
+        .forEach(jar -> modifiableModel.addRoot("jar://" + jar.getPath() + "!/", OrderRootType.CLASSES));
     modifiableModel.commit();
   }
 
