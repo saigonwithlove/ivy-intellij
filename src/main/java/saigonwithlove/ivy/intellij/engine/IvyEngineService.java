@@ -100,9 +100,10 @@ public class IvyEngineService {
       List<String> libraryPaths,
       List<String> excludePaths) {
     Library.ModifiableModel modifiableModel =
-        getOrCreateLibrary(libraryTable, libraryName).getModifiableModel();
+        createUniqueLibrary(libraryTable, libraryName).getModifiableModel();
     getJars(libraryPaths, excludePaths)
-        .forEach(jar -> modifiableModel.addRoot("jar://" + jar.getPath() + "!/", OrderRootType.CLASSES));
+        .forEach(
+            jar -> modifiableModel.addRoot("jar://" + jar.getPath() + "!/", OrderRootType.CLASSES));
     modifiableModel.commit();
   }
 
@@ -120,7 +121,7 @@ public class IvyEngineService {
         }
       } else {
         throw new IllegalArgumentException(
-            libraryDirectory.getAbsolutePath() + "is not a directory.");
+            libraryDirectory.getAbsolutePath() + " is not a directory.");
       }
     }
     return jars;
@@ -133,8 +134,12 @@ public class IvyEngineService {
         .collect(Collectors.toList());
   }
 
-  private Library getOrCreateLibrary(LibraryTable libraryTable, String libraryName) {
+  private Library createUniqueLibrary(LibraryTable libraryTable, String libraryName) {
     return Optional.ofNullable(libraryTable.getLibraryByName(libraryName))
+        .map(library -> {
+          libraryTable.removeLibrary(library);
+          return libraryTable.createLibrary(libraryName);
+        })
         .orElseGet(() -> libraryTable.createLibrary(libraryName));
   }
 }

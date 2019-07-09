@@ -11,16 +11,15 @@ import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.libraries.LibraryTable;
-import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.components.JBPanel;
 import java.awt.BorderLayout;
 import javax.swing.JComponent;
 import org.jetbrains.annotations.NotNull;
 import saigonwithlove.ivy.intellij.engine.IvyEngineService;
-import saigonwithlove.ivy.intellij.shared.PreferenceService;
+import saigonwithlove.ivy.intellij.settings.PreferenceService;
 
 public class IvyEngineView extends JBPanel<IvyEngineView> {
 
@@ -60,20 +59,7 @@ public class IvyEngineView extends JBPanel<IvyEngineView> {
         new AnAction("Open Settings Dialog", null, AllIcons.General.Settings) {
           @Override
           public void actionPerformed(@NotNull AnActionEvent ex) {
-            PreferenceService.State preferences =
-                ServiceManager.getService(project, PreferenceService.class).getState();
-            EngineSettingsDialog settingDialog = new EngineSettingsDialog(project, preferences);
-            if (settingDialog.showAndGet()) {
-              preferences.setIvyEngineDirectory(settingDialog.getEngineDirectory());
-              ApplicationManager.getApplication()
-                  .runWriteAction(
-                      () -> {
-                        ServiceManager.getService(project, IvyEngineService.class)
-                            .addLibraries(preferences.getIvyEngineDirectory());
-                      });
-              Logger.getInstance(IvyEngineView.class)
-                  .debug("Engine directory: " + settingDialog.getEngineDirectory());
-            }
+            ShowSettingsUtil.getInstance().showSettingsDialog(project, "Ivy");
           }
         };
     actions.add(settings);

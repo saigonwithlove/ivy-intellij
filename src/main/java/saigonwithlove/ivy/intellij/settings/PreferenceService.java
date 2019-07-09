@@ -1,4 +1,4 @@
-package saigonwithlove.ivy.intellij.shared;
+package saigonwithlove.ivy.intellij.settings;
 
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;

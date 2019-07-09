@@ -7,15 +7,13 @@
     Unofficial Axon.ivy Framework Plugin for Ivy development on IntelliJ.
     ]]></description>
 
-  <!-- please see http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/plugin_compatibility.html
-       on how to target different products -->
-  <!-- uncomment to enable plugin in all products
-  <depends>com.intellij.modules.lang</depends>
-  -->
+  <depends>com.intellij.modules.java</depends>
 
   <extensions defaultExtensionNs="com.intellij">
-    <projectService serviceImplementation="saigonwithlove.ivy.intellij.shared.PreferenceService"/>
+    <postStartupActivity implementation="saigonwithlove.ivy.intellij.settings.InitializationActivity" />
+    <projectService serviceImplementation="saigonwithlove.ivy.intellij.settings.PreferenceService"/>
     <projectService serviceImplementation="saigonwithlove.ivy.intellij.engine.IvyEngineService"/>
+    <projectConfigurable instance="saigonwithlove.ivy.intellij.settings.IvySettingsView" />
     <toolWindow id="Ivy" icon="/icons/ivyToolWindow.svg" anchor="bottom"
                 factoryClass="saigonwithlove.ivy.intellij.toolwindow.IvyToolWindowFactory"/>
   </extensions>
