@@ -24,6 +24,8 @@ import org.apache.commons.io.FileUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.io.LocalFileFinder;
+import saigonwithlove.ivy.intellij.shared.GeneralRunProfile;
+import saigonwithlove.ivy.intellij.shared.IvyBundle;
 
 @NoArgsConstructor
 public class IvyEngineService {
@@ -54,7 +56,7 @@ public class IvyEngineService {
           ExecutionEnvironmentBuilder.create(
                   project,
                   DefaultRunExecutor.getRunExecutorInstance(),
-                  new IvyEngineRunProfile(commandLine))
+                  new GeneralRunProfile(commandLine, IvyBundle.message("tasks.runIvyEngine.title")))
               .build();
       environment.setExecutionId(123456789);
       environment.getRunner().execute(environment);
@@ -136,10 +138,11 @@ public class IvyEngineService {
 
   private Library createUniqueLibrary(LibraryTable libraryTable, String libraryName) {
     return Optional.ofNullable(libraryTable.getLibraryByName(libraryName))
-        .map(library -> {
-          libraryTable.removeLibrary(library);
-          return libraryTable.createLibrary(libraryName);
-        })
+        .map(
+            library -> {
+              libraryTable.removeLibrary(library);
+              return libraryTable.createLibrary(libraryName);
+            })
         .orElseGet(() -> libraryTable.createLibrary(libraryName));
   }
 }

@@ -37,13 +37,13 @@ public class IvySettingsView implements SearchableConfigurable, Configurable.NoS
   @NotNull
   @Override
   public String getId() {
-    return "Ivy";
+    return IvyBundle.message("settings.displayName");
   }
 
   @Nls(capitalization = Nls.Capitalization.Title)
   @Override
   public String getDisplayName() {
-    return "Ivy";
+    return IvyBundle.message("settings.displayName");
   }
 
   @Nullable
@@ -62,10 +62,10 @@ public class IvySettingsView implements SearchableConfigurable, Configurable.NoS
 
     JBPanel content = new JBPanel(new BorderLayout(12, 0));
     JBLabel engineDirectoryLabel =
-        new JBLabel(IvyBundle.message("toolWindow.engine.settingsDialog.engineDirectory"));
+        new JBLabel(IvyBundle.message("settings.engine.engineDirectoryLabel"));
     content.add(engineDirectoryLabel, BorderLayout.WEST);
     JPanel engineDirectoryPanel =
-        GuiUtils.constructDirectoryBrowserField(engineDirectoryField, "engine directory");
+        GuiUtils.constructDirectoryBrowserField(engineDirectoryField, "ivyEngineDirectory");
     engineDirectoryPanel.setPreferredSize(new Dimension(600, 30));
     content.add(engineDirectoryPanel, BorderLayout.CENTER);
 
