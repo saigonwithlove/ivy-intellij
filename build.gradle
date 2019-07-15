@@ -4,7 +4,7 @@ plugins {
 }
 
 group 'saigonwithlove.ivy'
-version '0.1.3-SNAPSHOT'
+version '0.1.4-SNAPSHOT'
 
 sourceCompatibility = 1.8
 
@@ -29,5 +29,6 @@ patchPluginXml {
       <ul>
         <li>Start/Stop Ivy Engine</li>
         <li>Provide Axon.ivy Libraries</li>
+        <li>Sync module to Ivy Engine</li>
       </ul>"""
 }
