@@ -21,6 +21,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.NoArgsConstructor;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.io.LocalFileFinder;
@@ -40,11 +41,16 @@ public class IvyEngineService {
       ImmutableList.of("/system/configuration/org.eclipse.osgi/72/0/.cp/lib/mvn/");
   private static final List<String> WEB_APPLICATION_PATHS =
       ImmutableList.of("/webapps/ivy/WEB-INF/lib/");
+  private static final List<String> RULE_ENGINE_PATHS =
+      ImmutableList.of(
+          "/system/plugins/ch.ivyteam.ivy.rule.engine.libs_7.0.0.201809271142.jar",
+          "/system/plugins/ch.ivyteam.ivy.rule.engine_7.0.0.201809271142.jar");
   private static final List<String> IVY_PATHS =
       ImmutableList.of(
           "/system/lib/boot/", "/system/plugins/", "/system/configuration/org.eclipse.osgi/");
   private static final Logger LOG =
       Logger.getInstance("#" + IvyEngineService.class.getCanonicalName());
+  private static final String JAR_EXTENSION = "jar";
 
   public void startIvyEngine(@NotNull String ivyEngineDirectory, @NotNull Project project) {
     GeneralCommandLine commandLine =
@@ -75,6 +81,7 @@ public class IvyEngineService {
             .addAll(getLibraryPaths(ivyEngineDirectory, ULC_PATHS))
             .addAll(getLibraryPaths(ivyEngineDirectory, WEB_SERVICE_CALL_PATHS))
             .addAll(getLibraryPaths(ivyEngineDirectory, WEB_SERVICE_PROCESS_PATHS))
+            .addAll(getLibraryPaths(ivyEngineDirectory, RULE_ENGINE_PATHS))
             .build());
     addLibrary(
         libraryTable,
@@ -91,6 +98,11 @@ public class IvyEngineService {
         libraryTable,
         "WS_PROCESS_CONTAINER",
         getLibraryPaths(ivyEngineDirectory, WEB_SERVICE_PROCESS_PATHS),
+        null);
+    addLibrary(
+        libraryTable,
+        "RULE_ENGINE_CONTAINER",
+        getLibraryPaths(ivyEngineDirectory, RULE_ENGINE_PATHS),
         null);
     addLibrary(
         libraryTable, "org.eclipse.jst.j2ee.internal.web.container", Collections.emptyList(), null);
@@ -113,20 +125,28 @@ public class IvyEngineService {
       @NotNull List<String> paths, @Nullable List<String> excludePaths) {
     List<VirtualFile> jars = new ArrayList<>();
     for (String path : paths) {
-      File libraryDirectory = new File(path);
-      if (libraryDirectory.isDirectory()) {
-        for (File jar : FileUtils.listFiles(libraryDirectory, new String[] {"jar"}, true)) {
-          if (excludePaths == null
-              || excludePaths.stream().noneMatch(jar.getAbsolutePath()::contains)) {
+      File libraryPath = new File(path);
+      if (libraryPath.isDirectory()) {
+        for (File jar : FileUtils.listFiles(libraryPath, new String[] {JAR_EXTENSION}, true)) {
+          if (isNotExcluded(jar, excludePaths)) {
             jars.add(LocalFileFinder.findFile(jar.getAbsolutePath()));
           }
         }
+      } else if (libraryPath.isFile()
+          && JAR_EXTENSION.equals(FilenameUtils.getExtension(libraryPath.getName()))) {
+        if (isNotExcluded(libraryPath, excludePaths)) {
+          jars.add(LocalFileFinder.findFile(libraryPath.getAbsolutePath()));
+        }
       } else {
         throw new IllegalArgumentException(
-            libraryDirectory.getAbsolutePath() + " is not a directory.");
+            libraryPath.getAbsolutePath() + " is not a directory or jar file.");
       }
     }
     return jars;
+  }
+
+  private boolean isNotExcluded(File jar, @Nullable List<String> excludePaths) {
+    return excludePaths == null || excludePaths.stream().noneMatch(jar.getAbsolutePath()::contains);
   }
 
   private List<String> getLibraryPaths(
