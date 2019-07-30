@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.ui.CollectionListModel;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBPanel;
+import com.intellij.ui.components.JBScrollPane;
 import java.awt.BorderLayout;
 import java.io.IOException;
 import java.net.URI;
@@ -36,6 +37,8 @@ import saigonwithlove.ivy.intellij.engine.IvyEngineService;
 import saigonwithlove.ivy.intellij.mirror.FileSyncProcessor;
 import saigonwithlove.ivy.intellij.settings.PreferenceService;
 import saigonwithlove.ivy.intellij.shared.IvyBundle;
+import saigonwithlove.ivy.intellij.shared.Modules;
+import saigonwithlove.ivy.intellij.shared.Projects;
 
 public class IvyEngineView extends JBPanel<IvyEngineView> {
   private static final Logger LOG =
@@ -54,12 +57,13 @@ public class IvyEngineView extends JBPanel<IvyEngineView> {
     JBPanel panel = new JBPanel(new BorderLayout());
     CollectionListModel<Module> model = new CollectionListModel<>();
     Arrays.stream(ModuleManager.getInstance(project).getSortedModules())
-        .sorted((a, b) -> Collator.getInstance().compare(a.getName(), b.getName()))
+        .filter(Modules::isIvyModule)
+        .sorted(Modules::compareByName)
         .forEach(model::add);
     modules.setModel(model);
-    modules.setCellRenderer(new ModuleCellRenderer());
+    modules.setCellRenderer(new ModuleCellRenderer(Projects.getMavenModels(project)));
     panel.add(modules, BorderLayout.WEST);
-    return panel;
+    return new JBScrollPane(panel);
   }
 
   @NotNull
@@ -144,7 +148,6 @@ public class IvyEngineView extends JBPanel<IvyEngineView> {
                     + module.getName()
                     + "/1");
         FileSyncProcessor.Options options = new FileSyncProcessor.Options();
-        options.verbosityLevel = 9;
         FileSyncProcessor fileSyncProcessor = new FileSyncProcessor();
         FileSyncProcessor.UserInterface ui =
             new FileSyncProcessor.UserInterface() {
