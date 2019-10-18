@@ -12,11 +12,11 @@ public class IvyToolWindowFactory implements ToolWindowFactory {
 
   @Override
   public void createToolWindowContent(@NotNull Project project, @NotNull ToolWindow toolWindow) {
-    IvyEngineView ivyEngineView = new IvyEngineView(project);
+    ModuleView moduleView = new ModuleView(project);
     Content engineViewContent =
         ContentFactory.SERVICE
             .getInstance()
-            .createContent(ivyEngineView, IvyBundle.message("toolWindow.engine.title"), false);
+            .createContent(moduleView, IvyBundle.message("toolWindow.module.title"), false);
     toolWindow.getContentManager().addContent(engineViewContent);
   }
 }

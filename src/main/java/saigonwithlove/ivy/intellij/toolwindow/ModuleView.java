@@ -27,8 +27,8 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.text.Collator;
 import java.util.Arrays;
+import java.util.Optional;
 import javax.swing.JComponent;
 import org.apache.http.client.fluent.Request;
 import org.apache.http.client.utils.URIBuilder;
@@ -40,12 +40,11 @@ import saigonwithlove.ivy.intellij.shared.IvyBundle;
 import saigonwithlove.ivy.intellij.shared.Modules;
 import saigonwithlove.ivy.intellij.shared.Projects;
 
-public class IvyEngineView extends JBPanel<IvyEngineView> {
-  private static final Logger LOG =
-      Logger.getInstance("#" + IvyEngineView.class.getCanonicalName());
+public class ModuleView extends JBPanel<ModuleView> {
+  private static final Logger LOG = Logger.getInstance("#" + ModuleView.class.getCanonicalName());
   private JBList<Module> modules;
 
-  public IvyEngineView(@NotNull Project project) {
+  public ModuleView(@NotNull Project project) {
     super(new BorderLayout());
     modules = new JBList<>();
     add(newToolbar(project), BorderLayout.WEST);
@@ -61,7 +60,7 @@ public class IvyEngineView extends JBPanel<IvyEngineView> {
         .sorted(Modules::compareByName)
         .forEach(model::add);
     modules.setModel(model);
-    modules.setCellRenderer(new ModuleCellRenderer(Projects.getMavenModels(project)));
+    modules.setCellRenderer(new ModuleCellRenderer(Projects.getIvyModels(project)));
     panel.add(modules, BorderLayout.WEST);
     return new JBScrollPane(panel);
   }
@@ -188,20 +187,25 @@ public class IvyEngineView extends JBPanel<IvyEngineView> {
       @Override
       public void run(@NotNull ProgressIndicator progressIndicator) {
         try {
-          progressIndicator.setFraction(0.1);
+          progressIndicator.setFraction(0.7);
           progressIndicator.setText(
               IvyBundle.message("tasks.reloadModule.progress.connecting", module.getName()));
-          URI reloadModuleUri =
-              new URIBuilder(
-                      "http://127.0.0.1:8081/ivy/pro/Portal/ivy-devtool/16AE38ED14569A2A/engine.ivp")
-                  .addParameter("command", "module$reload")
-                  .addParameter("pm", module.getName())
-                  .addParameter("pmv", "1")
-                  .build();
-          progressIndicator.setFraction(0.5);
-          progressIndicator.setText(
-              IvyBundle.message("tasks.reloadModule.progress.reloading", module.getName()));
-          Request.Get(reloadModuleUri).execute().returnContent();
+          Optional<String> baseIvyEngineUrlOpt =
+              ServiceManager.getService(project, IvyEngineService.class).getIvyEngineUrl();
+          if (baseIvyEngineUrlOpt.isPresent()) {
+            URI reloadModuleUri =
+                new URIBuilder(
+                        baseIvyEngineUrlOpt.get()
+                            + "/ivy/pro/Portal/ivy-devtool/16AE38ED14569A2A/engine.ivp")
+                    .addParameter("command", "module$reload")
+                    .addParameter("pm", module.getName())
+                    .addParameter("pmv", "1")
+                    .build();
+            progressIndicator.setFraction(0.9);
+            progressIndicator.setText(
+                IvyBundle.message("tasks.reloadModule.progress.reloading", module.getName()));
+            Request.Get(reloadModuleUri).execute().returnContent();
+          }
         } catch (URISyntaxException ex) {
           throw new IllegalArgumentException(ex);
         } catch (IOException ex) {

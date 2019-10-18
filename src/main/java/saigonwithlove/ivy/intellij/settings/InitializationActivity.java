@@ -28,10 +28,9 @@ public class InitializationActivity implements StartupActivity {
     if (StringUtils.isNotBlank(preferences.getIvyEngineDirectory())) {
       ApplicationManager.getApplication()
           .runWriteAction(
-              () -> {
-                ServiceManager.getService(project, IvyEngineService.class)
-                    .addLibraries(preferences.getIvyEngineDirectory());
-              });
+              () ->
+                  ServiceManager.getService(project, IvyEngineService.class)
+                      .addLibraries(preferences.getIvyEngineDirectory()));
     }
   }
 }

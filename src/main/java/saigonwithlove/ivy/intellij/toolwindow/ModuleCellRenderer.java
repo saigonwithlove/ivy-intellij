@@ -13,7 +13,6 @@ import org.apache.maven.model.Dependency;
 import org.apache.maven.model.Model;
 import org.jetbrains.annotations.NotNull;
 import saigonwithlove.ivy.intellij.shared.Modules;
-import saigonwithlove.ivy.intellij.shared.Projects;
 
 @AllArgsConstructor
 public class ModuleCellRenderer extends ColoredListCellRenderer<Module> {
