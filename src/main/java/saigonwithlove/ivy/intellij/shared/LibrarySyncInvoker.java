@@ -32,7 +32,7 @@ public class LibrarySyncInvoker {
           MessageDialogBuilder.yesNo(
                   "Warning",
                   "OSGI folder not exist! You should start engine at least one by click Start "
-                      + "Engine or Manually Start by clicking in Ivy Plugin Panel then restart IDE.")
+                      + "Engine or Manually Start by clicking Play button in Ivy Plugin Panel then restart IDE.")
               .yesText("Start Engine")
               .noText("Manually start")
               .project(project)
