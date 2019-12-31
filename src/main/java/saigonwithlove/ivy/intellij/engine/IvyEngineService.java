@@ -189,4 +189,9 @@ public class IvyEngineService {
     }
     return Optional.empty();
   }
+
+  public boolean isOsgiFolderExist(String directoryUri) {
+    File osgiPath = new File(directoryUri + "/system/configuration/org.eclipse.osgi");
+    return osgiPath.isDirectory() && osgiPath.exists();
+  }
 }
