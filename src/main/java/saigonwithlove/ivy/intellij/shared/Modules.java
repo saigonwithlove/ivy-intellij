@@ -10,6 +10,7 @@ import java.text.Collator;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import lombok.experimental.UtilityClass;
@@ -24,7 +25,9 @@ import org.jetbrains.annotations.NotNull;
 
 @UtilityClass
 public class Modules {
+  public static final String IVY_DEVTOOL = "ivy-devtool";
   private static final Logger LOG = Logger.getInstance("#" + Modules.class.getCanonicalName());
+  private static final String IVY_PACKAGE_EXTENSION = "iar";
 
   public static boolean isIvyModule(Module module) {
     return Optional.of(module)
@@ -37,7 +40,7 @@ public class Modules {
   public static boolean isIvyModel(Model model) {
     return Optional.of(model)
         .map(Model::getPackaging)
-        .map("iar"::equalsIgnoreCase)
+        .map(IVY_PACKAGE_EXTENSION::equalsIgnoreCase)
         .orElse(Boolean.FALSE);
   }
 
@@ -57,14 +60,13 @@ public class Modules {
   @NotNull
   public static List<Dependency> getMissingIvyDependencies(Module module, List<Model> models) {
     Optional<Model> modelOpt = Modules.toMavenModel(module);
-    return modelOpt
-        .map(
-            model ->
-                model.getDependencies().stream()
-                    .filter(dependency -> "iar".equalsIgnoreCase(dependency.getType()))
-                    .filter(dependency -> models.stream().noneMatch(resolveDependency(dependency)))
-                    .collect(Collectors.toList()))
-        .orElse(Collections.emptyList());
+    Function<Model, List<Dependency>> dependencyMapper =
+        model ->
+            model.getDependencies().stream()
+                .filter(dependency -> IVY_PACKAGE_EXTENSION.equalsIgnoreCase(dependency.getType()))
+                .filter(dependency -> models.stream().noneMatch(resolveDependency(dependency)))
+                .collect(Collectors.toList());
+    return modelOpt.map(dependencyMapper).orElse(Collections.emptyList());
   }
 
   @NotNull

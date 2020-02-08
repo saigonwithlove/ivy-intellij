@@ -1,23 +1,29 @@
 package saigonwithlove.ivy.intellij.settings;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.MessageDialogBuilder;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBPanel;
 import com.intellij.ui.components.JBTextField;
+import java.awt.BorderLayout;
+import java.awt.Dimension;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
 import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import saigonwithlove.ivy.intellij.engine.IvyEngineService;
 import saigonwithlove.ivy.intellij.shared.IvyBundle;
-import saigonwithlove.ivy.intellij.shared.LibrarySyncInvoker;
-
-import javax.swing.*;
-import java.awt.*;
 
 public class IvySettingsView implements SearchableConfigurable, Configurable.NoScroll {
   private Project project;
@@ -79,7 +85,26 @@ public class IvySettingsView implements SearchableConfigurable, Configurable.NoS
   public void apply() throws ConfigurationException {
     PreferenceService.State preferences = preferenceService.getState();
     preferences.setIvyEngineDirectory(engineDirectoryField.getText());
-    ServiceManager.getService(project, LibrarySyncInvoker.class).syncLibraries(project, preferences);
+    IvyEngineService ivyEngineService = ServiceManager.getService(project, IvyEngineService.class);
+    if (ivyEngineService.isOsgiFolderExist(preferences.getIvyEngineDirectory())) {
+      ApplicationManager.getApplication()
+          .runWriteAction(
+              () ->
+                  ServiceManager.getService(project, IvyEngineService.class)
+                      .addLibraries(preferences.getIvyEngineDirectory()));
+    } else {
+      int result =
+          MessageDialogBuilder.yesNo(
+                  IvyBundle.message("settings.engine.startEngineDialog.title"),
+                  IvyBundle.message("settings.engine.startEngineDialog.message"))
+              .yesText(IvyBundle.message("settings.engine.startEngineDialog.confirm"))
+              .noText(IvyBundle.message("settings.engine.startEngineDialog.cancel"))
+              .project(project)
+              .show();
+      if (result == Messages.YES) {
+        ivyEngineService.startIvyEngine(preferences.getIvyEngineDirectory(), project);
+      }
+    }
   }
 
   @Override
