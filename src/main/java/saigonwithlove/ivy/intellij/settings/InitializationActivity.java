@@ -7,8 +7,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.Messages;
+import org.apache.maven.artifact.versioning.ArtifactVersion;
 import org.jetbrains.annotations.NotNull;
+import saigonwithlove.ivy.intellij.engine.IvyEngineDefinition;
 import saigonwithlove.ivy.intellij.engine.IvyEngineService;
+import saigonwithlove.ivy.intellij.engine.IvyEngineVersions;
 import saigonwithlove.ivy.intellij.shared.IvyBundle;
 import saigonwithlove.ivy.intellij.shared.Modules;
 
@@ -18,12 +21,13 @@ public class InitializationActivity implements StartupActivity {
     PreferenceService.State preferences =
         ServiceManager.getService(project, PreferenceService.class).getState();
     IvyEngineService ivyEngineService = ServiceManager.getService(project, IvyEngineService.class);
-    if (ivyEngineService.isOsgiFolderExist(preferences.getIvyEngineDirectory())) {
+    ArtifactVersion ivyEngineVersion =
+        IvyEngineVersions.parseVersion(preferences.getIvyEngineDirectory());
+    preferences.setIvyEngineDefinition(IvyEngineDefinition.fromVersion(ivyEngineVersion));
+    if (ivyEngineService.libraryDirectoryExists()) {
       ApplicationManager.getApplication()
           .runWriteAction(
-              () ->
-                  ServiceManager.getService(project, IvyEngineService.class)
-                      .addLibraries(preferences.getIvyEngineDirectory()));
+              () -> ServiceManager.getService(project, IvyEngineService.class).addLibraries());
     } else {
       int result =
           MessageDialogBuilder.yesNo(
@@ -34,14 +38,14 @@ public class InitializationActivity implements StartupActivity {
               .project(project)
               .show();
       if (result == Messages.YES) {
-        ivyEngineService.startIvyEngine(preferences.getIvyEngineDirectory(), project);
+        ivyEngineService.startIvyEngine();
       }
     }
     toggleIvyDevtoolSetting(project, preferences);
   }
 
   private void toggleIvyDevtoolSetting(
-      @NotNull Project project, PreferenceService.State preferences) {
+      @NotNull Project project, @NotNull PreferenceService.State preferences) {
     preferences.setIvyDevToolEnabled(
         ModuleManager.getInstance(project).findModuleByName(Modules.IVY_DEVTOOL) != null);
   }

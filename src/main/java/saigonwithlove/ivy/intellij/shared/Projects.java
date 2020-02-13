@@ -14,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
 @UtilityClass
 public class Projects {
   @NotNull
-  public static List<Model> getIvyModels(Project project) {
+  public static List<Model> getIvyModels(@NotNull Project project) {
     return Arrays.stream(
             ModuleManager.getInstance(Preconditions.checkNotNull(project)).getModules())
         .filter(Modules::isMavenModel)

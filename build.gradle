@@ -4,7 +4,7 @@ plugins {
 }
 
 group 'saigonwithlove.ivy'
-version '0.1.5-2019.3'
+version '0.1.6-2019.3'
 
 sourceCompatibility = 1.8
 

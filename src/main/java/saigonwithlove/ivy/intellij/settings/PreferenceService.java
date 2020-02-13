@@ -5,6 +5,7 @@ import com.intellij.openapi.components.State;
 import com.intellij.util.xmlb.annotations.Property;
 import lombok.Data;
 import org.jetbrains.annotations.NotNull;
+import saigonwithlove.ivy.intellij.engine.IvyEngineDefinition;
 
 @State(name = "ivy")
 public class PreferenceService implements PersistentStateComponent<PreferenceService.State> {
@@ -27,5 +28,6 @@ public class PreferenceService implements PersistentStateComponent<PreferenceSer
   public static class State {
     @Property private String ivyEngineDirectory;
     @Property private boolean ivyDevToolEnabled;
+    @Property private IvyEngineDefinition ivyEngineDefinition;
   }
 }

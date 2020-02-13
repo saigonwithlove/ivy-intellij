@@ -1,7 +1,6 @@
 package saigonwithlove.ivy.intellij.settings;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
@@ -19,20 +18,28 @@ import java.awt.GridBagLayout;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
 import org.apache.commons.lang.StringUtils;
+import org.apache.maven.artifact.versioning.ArtifactVersion;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import saigonwithlove.ivy.intellij.engine.IvyEngineDefinition;
 import saigonwithlove.ivy.intellij.engine.IvyEngineService;
+import saigonwithlove.ivy.intellij.engine.IvyEngineVersions;
 import saigonwithlove.ivy.intellij.shared.IvyBundle;
 
 public class IvySettingsView implements SearchableConfigurable, Configurable.NoScroll {
   private Project project;
   private PreferenceService preferenceService;
+  private IvyEngineService ivyEngineService;
   private JBTextField engineDirectoryField;
 
-  public IvySettingsView(@NotNull Project project, @NotNull PreferenceService preferenceService) {
+  public IvySettingsView(
+      @NotNull Project project,
+      @NotNull PreferenceService preferenceService,
+      @NotNull IvyEngineService ivyEngineService) {
     this.project = project;
     this.preferenceService = preferenceService;
+    this.ivyEngineService = ivyEngineService;
     this.engineDirectoryField = new JBTextField();
   }
 
@@ -85,13 +92,11 @@ public class IvySettingsView implements SearchableConfigurable, Configurable.NoS
   public void apply() throws ConfigurationException {
     PreferenceService.State preferences = preferenceService.getState();
     preferences.setIvyEngineDirectory(engineDirectoryField.getText());
-    IvyEngineService ivyEngineService = ServiceManager.getService(project, IvyEngineService.class);
-    if (ivyEngineService.isOsgiFolderExist(preferences.getIvyEngineDirectory())) {
-      ApplicationManager.getApplication()
-          .runWriteAction(
-              () ->
-                  ServiceManager.getService(project, IvyEngineService.class)
-                      .addLibraries(preferences.getIvyEngineDirectory()));
+    ArtifactVersion ivyEngineVersion =
+        IvyEngineVersions.parseVersion(preferences.getIvyEngineDirectory());
+    preferences.setIvyEngineDefinition(IvyEngineDefinition.fromVersion(ivyEngineVersion));
+    if (ivyEngineService.libraryDirectoryExists()) {
+      ApplicationManager.getApplication().runWriteAction(() -> ivyEngineService.addLibraries());
     } else {
       int result =
           MessageDialogBuilder.yesNo(
@@ -102,7 +107,7 @@ public class IvySettingsView implements SearchableConfigurable, Configurable.NoS
               .project(project)
               .show();
       if (result == Messages.YES) {
-        ivyEngineService.startIvyEngine(preferences.getIvyEngineDirectory(), project);
+        ivyEngineService.startIvyEngine();
       }
     }
   }

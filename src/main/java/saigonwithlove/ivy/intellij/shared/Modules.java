@@ -29,7 +29,7 @@ public class Modules {
   private static final Logger LOG = Logger.getInstance("#" + Modules.class.getCanonicalName());
   private static final String IVY_PACKAGE_EXTENSION = "iar";
 
-  public static boolean isIvyModule(Module module) {
+  public static boolean isIvyModule(@NotNull Module module) {
     return Optional.of(module)
         .filter(Modules::isMavenModel)
         .flatMap(Modules::toMavenModel)
@@ -37,14 +37,15 @@ public class Modules {
         .orElse(Boolean.FALSE);
   }
 
-  public static boolean isIvyModel(Model model) {
+  public static boolean isIvyModel(@NotNull Model model) {
     return Optional.of(model)
         .map(Model::getPackaging)
         .map(IVY_PACKAGE_EXTENSION::equalsIgnoreCase)
         .orElse(Boolean.FALSE);
   }
 
-  public static Optional<Model> toMavenModel(Module module) {
+  @NotNull
+  public static Optional<Model> toMavenModel(@NotNull Module module) {
     try {
       return Optional.of(new MavenXpp3Reader().read(new FileReader(getPomPath(module))));
     } catch (IOException | XmlPullParserException ex) {
@@ -53,12 +54,12 @@ public class Modules {
     }
   }
 
-  public static int compareByName(Module a, Module b) {
+  public static int compareByName(@NotNull Module a, @NotNull Module b) {
     return Collator.getInstance().compare(a.getName(), b.getName());
   }
 
   @NotNull
-  public static List<Dependency> getMissingIvyDependencies(Module module, List<Model> models) {
+  public static List<Dependency> getMissingIvyDependencies(@NotNull Module module, @NotNull List<Model> models) {
     Optional<Model> modelOpt = Modules.toMavenModel(module);
     Function<Model, List<Dependency>> dependencyMapper =
         model ->
@@ -70,7 +71,7 @@ public class Modules {
   }
 
   @NotNull
-  private static Predicate<Model> resolveDependency(Dependency dependency) {
+  private static Predicate<Model> resolveDependency(@NotNull Dependency dependency) {
     return model -> {
       try {
         return dependency.getGroupId().equals(model.getGroupId())
@@ -84,7 +85,7 @@ public class Modules {
     };
   }
 
-  public static boolean isMavenModel(Module module) {
+  public static boolean isMavenModel(@NotNull Module module) {
     return Optional.of(module)
         .map(m -> getPomPath(m))
         .map(path -> new File(path))
@@ -93,7 +94,7 @@ public class Modules {
   }
 
   @NotNull
-  private static String getPomPath(Module module) {
+  private static String getPomPath(@NotNull Module module) {
     return ModuleRootManager.getInstance(module).getContentRoots()[0].getCanonicalPath()
         + "/pom.xml";
   }
