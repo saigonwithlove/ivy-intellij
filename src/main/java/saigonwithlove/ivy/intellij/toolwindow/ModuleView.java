@@ -17,6 +17,9 @@ import java.awt.BorderLayout;
 import java.util.Arrays;
 import javax.swing.JComponent;
 import org.jetbrains.annotations.NotNull;
+import saigonwithlove.ivy.intellij.action.DeployModuleAction;
+import saigonwithlove.ivy.intellij.action.OpenSettingsAction;
+import saigonwithlove.ivy.intellij.action.StartEngineAction;
 import saigonwithlove.ivy.intellij.engine.IvyEngineService;
 import saigonwithlove.ivy.intellij.settings.PreferenceService;
 import saigonwithlove.ivy.intellij.shared.IvyBundle;
@@ -76,12 +79,7 @@ public class ModuleView extends JBPanel<ModuleView> {
 
     // Setting
     actions.add(new Separator());
-    actions.add(
-        new OpenSettingsAction(
-            IvyBundle.message("toolWindow.actions.settings.tooltip"),
-            IvyBundle.message("toolWindow.actions.settings.description"),
-            AllIcons.General.Settings,
-            project));
+    actions.add(new OpenSettingsAction(project));
 
     return ActionManager.getInstance()
         .createActionToolbar("IvyServerToolbar", actions, false)

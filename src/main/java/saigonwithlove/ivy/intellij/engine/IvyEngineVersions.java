@@ -4,6 +4,7 @@ import java.io.File;
 import java.util.Arrays;
 import java.util.NoSuchElementException;
 import java.util.Objects;
+import java.util.stream.Stream;
 import lombok.experimental.UtilityClass;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -16,7 +17,7 @@ public class IvyEngineVersions {
   @NotNull
   public static ArtifactVersion parseVersion(@NotNull String ivyEngineDirectory) {
     String libraryFileName =
-        Arrays.asList("/system/plugins", "/lib/ivy").stream()
+        Stream.of("/system/plugins", "/lib/ivy")
             .map(path -> new File(ivyEngineDirectory, path))
             .map(File::list)
             .filter(Objects::nonNull)

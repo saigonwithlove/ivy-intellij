@@ -1,4 +1,4 @@
-package saigonwithlove.ivy.intellij.toolwindow;
+package saigonwithlove.ivy.intellij.action;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;

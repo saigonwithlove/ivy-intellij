@@ -26,6 +26,7 @@ public class PreferenceService implements PersistentStateComponent<PreferenceSer
 
   @Data
   public static class State {
+    private boolean enabled;
     @Property private String ivyEngineDirectory;
     private boolean ivyDevToolEnabled;
     private IvyEngineDefinition ivyEngineDefinition;

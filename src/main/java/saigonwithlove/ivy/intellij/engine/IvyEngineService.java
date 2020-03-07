@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.function.Supplier;
+import org.apache.commons.lang.StringUtils;
 import org.apache.http.client.fluent.Request;
 import org.jetbrains.annotations.NotNull;
 import saigonwithlove.ivy.intellij.settings.PreferenceService;
@@ -124,5 +125,20 @@ public class IvyEngineService {
             preferences.getIvyEngineDirectory()
                 + preferences.getIvyEngineDefinition().getLibraryDirectory());
     return libraryDirectory.isDirectory();
+  }
+
+  public boolean isValidIvyEngine() {
+    String ivyEngineDirectory = preferenceService.getState().getIvyEngineDirectory();
+    if (StringUtils.isBlank(ivyEngineDirectory)) {
+      return false;
+    }
+
+    try {
+      IvyEngineVersions.parseVersion(ivyEngineDirectory);
+      return true;
+    } catch (NoSuchElementException ex) {
+      LOG.warn(ex);
+      return false;
+    }
   }
 }

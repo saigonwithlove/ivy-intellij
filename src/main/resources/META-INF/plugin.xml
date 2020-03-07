@@ -10,12 +10,13 @@
   <depends>com.intellij.modules.java</depends>
 
   <extensions defaultExtensionNs="com.intellij">
-    <postStartupActivity implementation="saigonwithlove.ivy.intellij.settings.InitializationActivity" />
+    <postStartupActivity implementation="saigonwithlove.ivy.intellij.settings.InitializationActivity"/>
     <projectService serviceImplementation="saigonwithlove.ivy.intellij.settings.PreferenceService"/>
     <projectService serviceImplementation="saigonwithlove.ivy.intellij.engine.IvyEngineService"/>
-    <projectConfigurable instance="saigonwithlove.ivy.intellij.settings.IvySettingsView" />
+    <projectConfigurable instance="saigonwithlove.ivy.intellij.settings.IvySettingsView"/>
     <toolWindow id="Ivy" icon="/icons/ivyToolWindow.svg" anchor="bottom"
-                factoryClass="saigonwithlove.ivy.intellij.toolwindow.IvyToolWindowFactory"/>
+                factoryClass="saigonwithlove.ivy.intellij.toolwindow.IvyToolWindowFactory"
+                conditionClass="saigonwithlove.ivy.intellij.toolwindow.IvyToolWindowCondition"/>
   </extensions>
 
   <actions>

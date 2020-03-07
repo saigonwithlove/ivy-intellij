@@ -22,10 +22,13 @@ import org.apache.maven.artifact.versioning.ArtifactVersion;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import saigonwithlove.ivy.intellij.action.OpenSettingsAction;
 import saigonwithlove.ivy.intellij.engine.IvyEngineDefinition;
 import saigonwithlove.ivy.intellij.engine.IvyEngineService;
 import saigonwithlove.ivy.intellij.engine.IvyEngineVersions;
 import saigonwithlove.ivy.intellij.shared.IvyBundle;
+import saigonwithlove.ivy.intellij.shared.Projects;
+import saigonwithlove.ivy.intellij.shared.Notifier;
 
 public class IvySettingsView implements SearchableConfigurable, Configurable.NoScroll {
   private Project project;
@@ -92,6 +95,21 @@ public class IvySettingsView implements SearchableConfigurable, Configurable.NoS
   public void apply() throws ConfigurationException {
     PreferenceService.State preferences = preferenceService.getState();
     preferences.setIvyEngineDirectory(engineDirectoryField.getText());
+
+    if (Projects.getIvyModels(project).isEmpty()) {
+      return;
+    } else {
+      preferences.setEnabled(true);
+    }
+
+    if (!ivyEngineService.isValidIvyEngine()) {
+      Notifier.info(
+          project,
+          new OpenSettingsAction(project),
+          IvyBundle.message("notification.ivyEngineDirectoryInvalid"));
+      return;
+    }
+
     ArtifactVersion ivyEngineVersion =
         IvyEngineVersions.parseVersion(preferences.getIvyEngineDirectory());
     preferences.setIvyEngineDefinition(IvyEngineDefinition.fromVersion(ivyEngineVersion));
