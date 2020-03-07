@@ -1,7 +1,12 @@
+
 .gradle
 build
 gradle
 gradlew
 gradlew.bat
+ivy-intellij.iml
+ivy-intellij.ipr
 ivy-intellij.iws
+ivy-intellij.main.iml
+ivy-intellij.test.iml
 out
