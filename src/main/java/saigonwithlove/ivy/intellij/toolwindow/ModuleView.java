@@ -21,7 +21,6 @@ import saigonwithlove.ivy.intellij.engine.IvyEngineService;
 import saigonwithlove.ivy.intellij.settings.PreferenceService;
 import saigonwithlove.ivy.intellij.shared.IvyBundle;
 import saigonwithlove.ivy.intellij.shared.Modules;
-import saigonwithlove.ivy.intellij.shared.Projects;
 
 public class ModuleView extends JBPanel<ModuleView> {
   private static final Logger LOG = Logger.getInstance("#" + ModuleView.class.getCanonicalName());
@@ -40,10 +39,10 @@ public class ModuleView extends JBPanel<ModuleView> {
     CollectionListModel<Module> model = new CollectionListModel<>();
     Arrays.stream(ModuleManager.getInstance(project).getSortedModules())
         .filter(Modules::isIvyModule)
-        .sorted(Modules::compareByName)
+        .sorted(Modules.MODULE_COMPARATOR)
         .forEach(model::add);
     modules.setModel(model);
-    modules.setCellRenderer(new ModuleCellRenderer(Projects.getIvyModels(project)));
+    modules.setCellRenderer(new ModuleCellRenderer(project));
     panel.add(modules, BorderLayout.WEST);
     return new JBScrollPane(panel);
   }

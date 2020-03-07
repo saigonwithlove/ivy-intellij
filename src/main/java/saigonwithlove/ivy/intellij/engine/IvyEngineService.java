@@ -1,6 +1,7 @@
 package saigonwithlove.ivy.intellij.engine;
 
-import com.google.common.collect.Lists;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.executors.DefaultRunExecutor;
@@ -9,11 +10,18 @@ import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.JavaSdkVersion;
+import com.intellij.openapi.projectRoots.ProjectJdkTable;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import java.io.File;
+import java.text.MessageFormat;
+import java.util.Arrays;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Optional;
+import java.util.function.Supplier;
 import org.apache.http.client.fluent.Request;
 import org.jetbrains.annotations.NotNull;
 import saigonwithlove.ivy.intellij.settings.PreferenceService;
@@ -34,9 +42,11 @@ public class IvyEngineService {
   public void startIvyEngine() {
     String ivyEngineDirectory = preferenceService.getState().getIvyEngineDirectory();
     String ivyCommand = preferenceService.getState().getIvyEngineDefinition().getStartCommand();
-    GeneralCommandLine commandLine = new GeneralCommandLine(ivyEngineDirectory + ivyCommand);
-    commandLine.setWorkDirectory(ivyEngineDirectory);
-    commandLine.addParameters("start");
+    GeneralCommandLine commandLine =
+        new GeneralCommandLine(ivyEngineDirectory + ivyCommand)
+            .withEnvironment("JAVA_HOME", getCompatipleJavaHome())
+            .withWorkDirectory(ivyEngineDirectory)
+            .withParameters("start");
     try {
       ExecutionEnvironment environment =
           ExecutionEnvironmentBuilder.create(
@@ -49,6 +59,26 @@ public class IvyEngineService {
     } catch (ExecutionException ex) {
       LOG.error(ex);
     }
+  }
+
+  @NotNull
+  private String getCompatipleJavaHome() {
+    JavaSdkVersion requiredJdkVersion =
+        preferenceService.getState().getIvyEngineDefinition().getJdkVersion();
+    Supplier<RuntimeException> noJdkFoundExceptionSupplier =
+        () ->
+            new NoSuchElementException(
+                MessageFormat.format("Could not find JDK version: {0}", requiredJdkVersion));
+    return Arrays.stream(ProjectJdkTable.getInstance().getAllJdks())
+        .filter(sdk -> "JavaSDK".equals(sdk.getSdkType().getName()))
+        .filter(
+            sdk ->
+                requiredJdkVersion
+                    == JavaSdkVersion.fromVersionString(
+                        Preconditions.checkNotNull(sdk.getVersionString())))
+        .findFirst()
+        .map(Sdk::getHomePath)
+        .orElseThrow(noJdkFoundExceptionSupplier);
   }
 
   public void addLibraries() {
@@ -67,7 +97,7 @@ public class IvyEngineService {
 
   @NotNull
   public Optional<String> getIvyEngineUrl() {
-    List<String> ports = Lists.newArrayList("8081", "8082", "8083", "8084", "8085");
+    List<String> ports = ImmutableList.of("8080", "8081", "8082", "8083", "8084", "8085");
     for (String port : ports) {
       try {
         int statusCode =

@@ -1,5 +1,6 @@
 package saigonwithlove.ivy.intellij.engine;
 
+import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import java.text.MessageFormat;
 import java.util.Arrays;
 import java.util.List;
@@ -15,7 +16,12 @@ import org.jetbrains.annotations.NotNull;
 @Getter
 @AllArgsConstructor
 public enum IvyEngineDefinition {
-  IVY6(new DefaultArtifactVersion("6.0.0"), Arrays.asList(Ivy6Library.values()), "/lib") {
+  IVY6(
+      new DefaultArtifactVersion("6.0.0"),
+      Arrays.asList(Ivy6Library.values()),
+      "/lib",
+      "/applications",
+      JavaSdkVersion.JDK_1_8) {
     @NotNull
     @Override
     public String getStartCommand() {
@@ -28,7 +34,24 @@ public enum IvyEngineDefinition {
   IVY7(
       new DefaultArtifactVersion("7.0.0"),
       Arrays.asList(Ivy7Library.values()),
-      "/system/configuration/org.eclipse.osgi") {
+      "/system/configuration/org.eclipse.osgi",
+      "/system/applications",
+      JavaSdkVersion.JDK_1_8) {
+    @NotNull
+    @Override
+    public String getStartCommand() {
+      if (SystemUtils.IS_OS_WINDOWS) {
+        return "/bin/AxonIvyEngine.exe";
+      }
+      return "/bin/AxonIvyEngine";
+    }
+  },
+  IVY8(
+      new DefaultArtifactVersion("8.0.0"),
+      Arrays.asList(Ivy8Library.values()),
+      "/system/configuration/org.eclipse.osgi",
+      "/system/applications",
+      JavaSdkVersion.JDK_11) {
     @NotNull
     @Override
     public String getStartCommand() {
@@ -42,6 +65,8 @@ public enum IvyEngineDefinition {
   private ArtifactVersion version;
   private List<IvyLibrary> libraries;
   private String libraryDirectory;
+  private String applicationDirectory;
+  private JavaSdkVersion jdkVersion;
 
   @NotNull
   public abstract String getStartCommand();

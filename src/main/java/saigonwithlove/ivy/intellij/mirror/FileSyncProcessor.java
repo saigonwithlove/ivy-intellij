@@ -58,9 +58,8 @@ public class FileSyncProcessor {
   public enum DiffStatus {
     add('A'), // add to target      - source exists, target does not exist
     modify('M'), // modify target      - source and target exist but are different
-    rename(
-        'R'), // rename target      - source and target exist and are equal, but file name
-              // upper/lower case characters differ
+    rename('R'), // rename target      - source and target exist and are equal, but file name
+    // upper/lower case characters differ
     delete('D'); // delete from target - source does not exist, target exists
     public final char code;
 

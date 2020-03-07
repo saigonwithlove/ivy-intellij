@@ -1,13 +1,15 @@
 package saigonwithlove.ivy.intellij.shared;
 
+import com.google.common.base.Preconditions;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModuleRootManager;
-import java.io.File;
-import java.io.FileReader;
+import com.intellij.openapi.vfs.VirtualFile;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.text.Collator;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
@@ -26,6 +28,8 @@ import org.jetbrains.annotations.NotNull;
 @UtilityClass
 public class Modules {
   public static final String IVY_DEVTOOL = "ivy-devtool";
+  public static final Comparator<Module> MODULE_COMPARATOR = createModuleComparator();
+
   private static final Logger LOG = Logger.getInstance("#" + Modules.class.getCanonicalName());
   private static final String IVY_PACKAGE_EXTENSION = "iar";
 
@@ -47,19 +51,22 @@ public class Modules {
   @NotNull
   public static Optional<Model> toMavenModel(@NotNull Module module) {
     try {
-      return Optional.of(new MavenXpp3Reader().read(new FileReader(getPomPath(module))));
+      return Optional.of(
+          new MavenXpp3Reader().read(new InputStreamReader(getPomFile(module).getInputStream())));
     } catch (IOException | XmlPullParserException ex) {
       LOG.error("Could not read pom.xml.", ex);
       return Optional.empty();
     }
   }
 
-  public static int compareByName(@NotNull Module a, @NotNull Module b) {
-    return Collator.getInstance().compare(a.getName(), b.getName());
+  private static Comparator<Module> createModuleComparator() {
+    return (@NotNull Module a, @NotNull Module b) ->
+        Collator.getInstance().compare(a.getName(), b.getName());
   }
 
   @NotNull
-  public static List<Dependency> getMissingIvyDependencies(@NotNull Module module, @NotNull List<Model> models) {
+  public static List<Dependency> getMissingIvyDependencies(
+      @NotNull Module module, @NotNull List<Model> models) {
     Optional<Model> modelOpt = Modules.toMavenModel(module);
     Function<Model, List<Dependency>> dependencyMapper =
         model ->
@@ -87,15 +94,14 @@ public class Modules {
 
   public static boolean isMavenModel(@NotNull Module module) {
     return Optional.of(module)
-        .map(m -> getPomPath(m))
-        .map(path -> new File(path))
-        .map(File::isFile)
+        .map(Modules::getPomFile)
+        .map(pom -> pom.exists() && !pom.isDirectory())
         .orElse(Boolean.FALSE);
   }
 
   @NotNull
-  private static String getPomPath(@NotNull Module module) {
-    return ModuleRootManager.getInstance(module).getContentRoots()[0].getCanonicalPath()
-        + "/pom.xml";
+  private static VirtualFile getPomFile(@NotNull Module module) {
+    return Preconditions.checkNotNull(
+        ModuleRootManager.getInstance(module).getContentRoots()[0].findChild("pom.xml"));
   }
 }

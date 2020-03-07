@@ -1,6 +1,5 @@
 package saigonwithlove.ivy.intellij.shared;
 
-import com.google.common.base.Preconditions;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import java.util.Arrays;
@@ -15,8 +14,7 @@ import org.jetbrains.annotations.NotNull;
 public class Projects {
   @NotNull
   public static List<Model> getIvyModels(@NotNull Project project) {
-    return Arrays.stream(
-            ModuleManager.getInstance(Preconditions.checkNotNull(project)).getModules())
+    return Arrays.stream(ModuleManager.getInstance(project).getModules())
         .filter(Modules::isMavenModel)
         .flatMap(module -> Modules.toMavenModel(module).map(Stream::of).orElseGet(Stream::empty))
         .filter(Modules::isIvyModel)
