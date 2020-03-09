@@ -28,8 +28,8 @@ patchPluginXml {
   changeNotes """
       <h3>Feature</h3>
       <ul>
-        <li>Start/Stop Ivy Engine</li>
-        <li>Provide Axon.ivy Libraries</li>
-        <li>Sync module to Ivy Engine</li>
-      </ul>"""
+        <li>Provide Axon.ivy Libraries: can compile all Java classes within Ivy project.</li>
+        <li>Run project on Ivy Engine: Ivy plugin is able to start an Ivy Engine and deploy Ivy projects to it.</li>
+      </ul>
+      """
 }
