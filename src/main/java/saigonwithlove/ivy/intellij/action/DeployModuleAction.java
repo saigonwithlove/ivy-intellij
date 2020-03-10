@@ -1,5 +1,6 @@
 package saigonwithlove.ivy.intellij.action;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.compiler.CompileStatusNotification;
@@ -16,7 +17,6 @@ import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Optional;
-import javax.swing.Icon;
 import org.apache.http.client.fluent.Request;
 import org.apache.http.client.utils.URIBuilder;
 import org.jetbrains.annotations.NotNull;
@@ -24,6 +24,7 @@ import saigonwithlove.ivy.intellij.engine.IvyEngineService;
 import saigonwithlove.ivy.intellij.mirror.FileSyncProcessor;
 import saigonwithlove.ivy.intellij.settings.PreferenceService;
 import saigonwithlove.ivy.intellij.shared.IvyBundle;
+import saigonwithlove.ivy.intellij.shared.Notifier;
 
 public class DeployModuleAction extends AnAction {
   private Project project;
@@ -32,14 +33,14 @@ public class DeployModuleAction extends AnAction {
   private JBList<Module> modules;
 
   public DeployModuleAction(
-      @NotNull String text,
-      @NotNull String description,
-      @NotNull Icon icon,
       @NotNull Project project,
       @NotNull PreferenceService preferenceService,
       @NotNull IvyEngineService ivyEngineService,
       @NotNull JBList<Module> modules) {
-    super(text, description, icon);
+    super(
+        IvyBundle.message("toolWindow.actions.deployModule.tooltip"),
+        IvyBundle.message("toolWindow.actions.deployModule.description"),
+        AllIcons.Nodes.Deploy);
     this.project = project;
     this.preferenceService = preferenceService;
     this.ivyEngineService = ivyEngineService;
@@ -48,6 +49,17 @@ public class DeployModuleAction extends AnAction {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent event) {
+    // Show notification if ivy devtool is disabled
+    if (!preferenceService.getState().isIvyDevToolEnabled()) {
+      Notifier.info(
+          project,
+          new OpenUrlAction(
+              IvyBundle.message("notification.ivyDevtoolUrlText"),
+              "https://github.com/saigonwithlove/ivy-devtool/releases"),
+          IvyBundle.message("notification.ivyDevtoolDisabled"));
+      return;
+    }
+
     Module selectedModule = modules.getSelectedValue();
     // Reload module
     Task reloadModuleTask = newReloadModuleTask(project, selectedModule);
@@ -95,7 +107,8 @@ public class DeployModuleAction extends AnAction {
   }
 
   @NotNull
-  private Task newSyncModuleTask(@NotNull Project project, @NotNull Module module, @NotNull Task nextTask) {
+  private Task newSyncModuleTask(
+      @NotNull Project project, @NotNull Module module, @NotNull Task nextTask) {
     return new Task.Backgroundable(
         project, IvyBundle.message("tasks.syncModule.title", module.getName())) {
       @Override

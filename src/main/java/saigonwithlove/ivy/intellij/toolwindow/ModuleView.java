@@ -1,6 +1,5 @@
 package saigonwithlove.ivy.intellij.toolwindow;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.Separator;
@@ -22,7 +21,6 @@ import saigonwithlove.ivy.intellij.action.OpenSettingsAction;
 import saigonwithlove.ivy.intellij.action.StartEngineAction;
 import saigonwithlove.ivy.intellij.engine.IvyEngineService;
 import saigonwithlove.ivy.intellij.settings.PreferenceService;
-import saigonwithlove.ivy.intellij.shared.IvyBundle;
 import saigonwithlove.ivy.intellij.shared.Modules;
 
 public class ModuleView extends JBPanel<ModuleView> {
@@ -57,25 +55,10 @@ public class ModuleView extends JBPanel<ModuleView> {
     IvyEngineService ivyEngineService = ServiceManager.getService(project, IvyEngineService.class);
     DefaultActionGroup actions = new DefaultActionGroup();
     // Start Engine
-    actions.add(
-        new StartEngineAction(
-            IvyBundle.message("toolWindow.actions.startEngine.tooltip"),
-            IvyBundle.message("toolWindow.actions.startEngine.description"),
-            AllIcons.Actions.Execute,
-            ivyEngineService));
+    actions.add(new StartEngineAction(ivyEngineService));
 
     // Deploy
-    if (preferenceService.getState().isIvyDevToolEnabled()) {
-      actions.add(
-          new DeployModuleAction(
-              IvyBundle.message("toolWindow.actions.deployModule.tooltip"),
-              IvyBundle.message("toolWindow.actions.deployModule.description"),
-              AllIcons.Nodes.Deploy,
-              project,
-              preferenceService,
-              ivyEngineService,
-              modules));
-    }
+    actions.add(new DeployModuleAction(project, preferenceService, ivyEngineService, modules));
 
     // Setting
     actions.add(new Separator());
