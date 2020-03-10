@@ -10,7 +10,7 @@ import lombok.Getter;
 public enum Ivy6Library implements IvyLibrary {
   IVY_CONTAINER(
       "IVY_CONTAINER",
-      new ImmutableList.Builder<String>().add("/lib/ivy").add("/lib/shared").build(),
+      new ImmutableList.Builder<String>().add("/lib/ivy/*.jar").add("/lib/shared/*.jar").build(),
       new ImmutableList.Builder<String>()
           .add("/lib/shared/ulc-base-server.jar")
           .add("/lib/shared/ulc-base-client.jar")
@@ -19,7 +19,7 @@ public enum Ivy6Library implements IvyLibrary {
           .add("/lib/shared/ulc-local-server.jar")
           .add("/lib/shared/ulc-deployment-key.jar")
           .build()),
-  WEBAPP_CONTAINER("WEBAPP_CONTAINER", ImmutableList.of("/webapps/ivy/WEB-INF/lib/"), null),
+  WEBAPP_CONTAINER("WEBAPP_CONTAINER", ImmutableList.of("/webapps/ivy/WEB-INF/lib/*.jar"), null),
   ULC_CONTAINER(
       "ULC_CONTAINER",
       new ImmutableList.Builder<String>()
