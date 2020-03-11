@@ -5,10 +5,12 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.vfs.VirtualFile;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.experimental.UtilityClass;
+import org.apache.commons.collections.CollectionUtils;
 import org.codehaus.plexus.util.DirectoryScanner;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,8 +45,12 @@ public class IvyLibraries {
   @NotNull
   private static List<VirtualFile> getJars(
       @NotNull String ivyEngineDirectory,
-      @NotNull List<String> paths,
+      @Nullable List<String> paths,
       @Nullable List<String> excludePaths) {
+    if (CollectionUtils.isEmpty(paths)) {
+      return Collections.emptyList();
+    }
+
     DirectoryScanner scanner = new DirectoryScanner();
     scanner.setBasedir(ivyEngineDirectory);
     scanner.setIncludes(paths.toArray(new String[0]));
