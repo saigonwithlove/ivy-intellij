@@ -11,33 +11,33 @@ public enum Ivy7Library implements IvyLibrary {
   IVY_CONTAINER(
       "IVY_CONTAINER",
       ImmutableList.of(
-          "/system/lib/boot/*.jar",
-          "/system/plugins/*.jar",
-          "/system/configuration/org.eclipse.osgi/*.jar"),
+          "/system/lib/boot/**/*.jar",
+          "/system/plugins/**/*.jar",
+          "/system/configuration/org.eclipse.osgi/**/*.jar"),
       ImmutableList.of(
-          "/system/configuration/org.eclipse.osgi/76/0/.cp/lib_ulc/",
-          "/system/configuration/org.eclipse.osgi/76/0/.cp/lib_ulc_deploy/",
-          "/system/configuration/org.eclipse.osgi/76/0/.cp/lib_ulc_ext/",
-          "/system/configuration/org.eclipse.osgi/70/0/.cp/lib/axis2-1.3_patched/",
-          "/system/configuration/org.eclipse.osgi/72/0/.cp/lib/mvn/",
+          "/system/configuration/org.eclipse.osgi/76/0/.cp/lib_ulc/**/*.jar",
+          "/system/configuration/org.eclipse.osgi/76/0/.cp/lib_ulc_deploy/**/*.jar",
+          "/system/configuration/org.eclipse.osgi/76/0/.cp/lib_ulc_ext/**/*.jar",
+          "/system/configuration/org.eclipse.osgi/70/0/.cp/lib/axis2-1.3_patched/**/*.jar",
+          "/system/configuration/org.eclipse.osgi/72/0/.cp/lib/mvn/**/*.jar",
           "/system/plugins/ch.ivyteam.ivy.rule.engine.libs_*.jar",
           "/system/plugins/ch.ivyteam.ivy.rule.engine_*.jar")),
-  WEBAPP_CONTAINER("WEBAPP_CONTAINER", ImmutableList.of("/webapps/ivy/WEB-INF/lib/*.jar"), null),
+  WEBAPP_CONTAINER("WEBAPP_CONTAINER", ImmutableList.of("/webapps/ivy/WEB-INF/lib/**/*.jar"), null),
   ULC_CONTAINER(
       "ULC_CONTAINER",
       ImmutableList.of(
-          "/system/configuration/org.eclipse.osgi/76/0/.cp/lib_ulc/*.jar",
-          "/system/configuration/org.eclipse.osgi/76/0/.cp/lib_ulc_deploy/*.jar",
-          "/system/configuration/org.eclipse.osgi/76/0/.cp/lib_ulc_ext/*.jar"),
+          "/system/configuration/org.eclipse.osgi/76/0/.cp/lib_ulc/**/*.jar",
+          "/system/configuration/org.eclipse.osgi/76/0/.cp/lib_ulc_deploy/**/*.jar",
+          "/system/configuration/org.eclipse.osgi/76/0/.cp/lib_ulc_ext/**/*.jar"),
       null),
   WS_CALL_AXIS2_CONTAINER(
       "WS_CALL_AXIS2_CONTAINER",
       ImmutableList.of(
-          "/system/configuration/org.eclipse.osgi/70/0/.cp/lib/axis2-1.3_patched/*.jar"),
+          "/system/configuration/org.eclipse.osgi/70/0/.cp/lib/axis2-1.3_patched/**/*.jar"),
       null),
   WS_PROCESS_CONTAINER(
       "WS_PROCESS_CONTAINER",
-      ImmutableList.of("/system/configuration/org.eclipse.osgi/72/0/.cp/lib/mvn/*.jar"),
+      ImmutableList.of("/system/configuration/org.eclipse.osgi/72/0/.cp/lib/mvn/**/*.jar"),
       null),
   RULE_ENGINE_CONTAINER(
       "RULE_ENGINE_CONTAINER",

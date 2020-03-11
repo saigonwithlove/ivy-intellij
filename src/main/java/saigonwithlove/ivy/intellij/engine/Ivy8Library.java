@@ -10,25 +10,13 @@ import lombok.Getter;
 public enum Ivy8Library implements IvyLibrary {
   IVY_CONTAINER(
       "IVY_CONTAINER",
-      ImmutableList.of(
-          "/system/plugins/*.jar",
-          "/system/plugins/ch.ivyteam.commons.lib_*/lib/*.jar",
-          "/system/plugins/ch.ivyteam.lib.classgraph_*/lib/*.jar",
-          "/system/plugins/ch.ivyteam.lib.cxf.webservice_*/lib/*.jar",
-          "/system/plugins/ch.ivyteam.lib.hibernate_*/lib/*.jar",
-          "/system/plugins/ch.ivyteam.lib.javax.activation_*/lib/*.jar",
-          "/system/plugins/ch.ivyteam.lib.jaxws_*/lib/*.jar",
-          "/system/plugins/ch.ivyteam.lib.jersey_*/lib/*.jar",
-          "/system/plugins/ch.ivyteam.lib.poi_*/lib/*.jar",
-          "/system/plugins/ch.ivyteam.lib.poi.ooxml_*/lib/*.jar",
-          "/system/plugins/ch.ivyteam.lib.util_*/lib/*.jar",
-          "/system/plugins/ch.ivyteam.tomcat_*/lib/*.jar"),
+      ImmutableList.of("/system/plugins/**/*.jar"),
       ImmutableList.of(
           "/system/plugins/ch.ivyteam.ivy.webservice.configuration_*.jar",
           "/system/plugins/ch.ivyteam.ivy.webservice.exec.cxf_*.jar",
           "/system/plugins/ch.ivyteam.ivy.webservice.execution_*.jar",
           "/system/plugins/ch.ivyteam.ivy.webservice.process_*.jar")),
-  WEBAPP_CONTAINER("WEBAPP_CONTAINER", ImmutableList.of("/webapps/ivy/WEB-INF/lib/*.jar"), null),
+  WEBAPP_CONTAINER("WEBAPP_CONTAINER", ImmutableList.of("/webapps/ivy/WEB-INF/lib/**/*.jar"), null),
   WS_CALL_AXIS2_CONTAINER(
       "WS_CALL_AXIS2_CONTAINER",
       ImmutableList.of(
