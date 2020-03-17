@@ -1,6 +1,5 @@
 package saigonwithlove.ivy.intellij.shared;
 
-import com.google.common.base.Preconditions;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -50,13 +49,17 @@ public class Modules {
 
   @NotNull
   public static Optional<Model> toMavenModel(@NotNull Module module) {
-    try {
-      return Optional.of(
-          new MavenXpp3Reader().read(new InputStreamReader(getPomFile(module).getInputStream())));
-    } catch (IOException | XmlPullParserException ex) {
-      LOG.error("Could not read pom.xml.", ex);
-      return Optional.empty();
+    Optional<VirtualFile> pomOpt = getPomFile(module);
+    if (pomOpt.isPresent()) {
+      try {
+        return Optional.of(
+            new MavenXpp3Reader().read(new InputStreamReader(pomOpt.get().getInputStream())));
+      } catch (IOException | XmlPullParserException ex) {
+        LOG.error("Could not read pom.xml.", ex);
+        return Optional.empty();
+      }
     }
+    return Optional.empty();
   }
 
   private static Comparator<Module> createModuleComparator() {
@@ -94,14 +97,13 @@ public class Modules {
 
   public static boolean isMavenModel(@NotNull Module module) {
     return Optional.of(module)
-        .map(Modules::getPomFile)
+        .flatMap(Modules::getPomFile)
         .map(pom -> pom.exists() && !pom.isDirectory())
         .orElse(Boolean.FALSE);
   }
 
-  @NotNull
-  private static VirtualFile getPomFile(@NotNull Module module) {
-    return Preconditions.checkNotNull(
+  private static Optional<VirtualFile> getPomFile(@NotNull Module module) {
+    return Optional.ofNullable(
         ModuleRootManager.getInstance(module).getContentRoots()[0].findChild("pom.xml"));
   }
 }
