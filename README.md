@@ -25,16 +25,44 @@ Don't worry if you can not see anything after installation. Ivy plugin only show
 module to your project.
 
 ## Create project
-(to be defined)
+![](doc/image/intellij_start.png)
 
-## Import Ivy module
-(to be defined)
+![](doc/image/select_empty_project.png)
+
+![](doc/image/naming_project.png)
 
 ## JDK
-(to be defined)
+![](doc/image/adding_jdk.png)
+
+![](doc/image/config_project_jdk.png)
+
+## Import Ivy module
+![](doc/image/prepare_ivy_project.png)
+
+![](doc/image/add_module.png)
+
+![](doc/image/select_import_module.png)
+
+![](doc/image/select_module_type_eclipse.png)
+
+![](doc/image/select_eclipse_module_import_options.png)
+
+![](doc/image/select_eclipse_module_to_import.png)
+
+![](doc/image/select_module_code_style.png)
+
+![](doc/image/finish_import_module.png)
 
 ## Ivy engine directory
-(to be defined)
+![](doc/image/config_ivy_engine_directory.png)
+
+![](doc/image/finish_config_ivy_engine_directory.png)
+
+![](doc/image/start_ivy_engine_for_osgi.png)
+
+![](doc/image/ivy_engine_is_running.png)
+
+![](doc/image/ivy_plugin_activated.png)
 
 ## Ivy Devtool
 (to be defined)
