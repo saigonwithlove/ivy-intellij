@@ -13,6 +13,7 @@
     <postStartupActivity implementation="saigonwithlove.ivy.intellij.settings.InitializationActivity"/>
     <projectService serviceImplementation="saigonwithlove.ivy.intellij.settings.PreferenceService"/>
     <projectService serviceImplementation="saigonwithlove.ivy.intellij.engine.IvyEngineService"/>
+    <projectService serviceImplementation="saigonwithlove.ivy.intellij.devtool.IvyDevtoolService"/>
     <projectConfigurable instance="saigonwithlove.ivy.intellij.settings.IvySettingsView"/>
     <toolWindow id="Ivy" icon="/icons/ivyToolWindow.svg" anchor="bottom"
                 factoryClass="saigonwithlove.ivy.intellij.toolwindow.IvyToolWindowFactory"

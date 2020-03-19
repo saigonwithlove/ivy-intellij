@@ -11,15 +11,12 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.components.JBList;
-import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Objects;
 import java.util.Optional;
-import org.apache.http.client.fluent.Request;
-import org.apache.http.client.utils.URIBuilder;
 import org.jetbrains.annotations.NotNull;
+import saigonwithlove.ivy.intellij.devtool.IvyDevtoolService;
 import saigonwithlove.ivy.intellij.engine.IvyEngineService;
 import saigonwithlove.ivy.intellij.mirror.FileSyncProcessor;
 import saigonwithlove.ivy.intellij.settings.PreferenceService;
@@ -30,12 +27,14 @@ public class DeployModuleAction extends AnAction {
   private Project project;
   private PreferenceService preferenceService;
   private IvyEngineService ivyEngineService;
+  private IvyDevtoolService ivyDevtoolService;
   private JBList<Module> modules;
 
   public DeployModuleAction(
       @NotNull Project project,
       @NotNull PreferenceService preferenceService,
       @NotNull IvyEngineService ivyEngineService,
+      @NotNull IvyDevtoolService ivyDevtoolService,
       @NotNull JBList<Module> modules) {
     super(
         IvyBundle.message("toolWindow.actions.deployModule.tooltip"),
@@ -44,6 +43,7 @@ public class DeployModuleAction extends AnAction {
     this.project = project;
     this.preferenceService = preferenceService;
     this.ivyEngineService = ivyEngineService;
+    this.ivyDevtoolService = ivyDevtoolService;
     this.modules = modules;
   }
 
@@ -61,6 +61,10 @@ public class DeployModuleAction extends AnAction {
     }
 
     Module selectedModule = modules.getSelectedValue();
+    if (Objects.isNull(selectedModule)) {
+      Notifier.info(project, IvyBundle.message("notification.deployModuleNotSelected"));
+    }
+
     // Reload module
     Task reloadModuleTask = newReloadModuleTask(project, selectedModule);
     // Sync code with Ivy Engine
@@ -78,30 +82,15 @@ public class DeployModuleAction extends AnAction {
         project, IvyBundle.message("tasks.reloadModule.title", module.getName())) {
       @Override
       public void run(@NotNull ProgressIndicator progressIndicator) {
-        try {
-          progressIndicator.setFraction(0.7);
-          progressIndicator.setText(
-              IvyBundle.message("tasks.reloadModule.progress.connecting", module.getName()));
-          Optional<String> baseIvyEngineUrlOpt = ivyEngineService.getIvyEngineUrl();
-          if (baseIvyEngineUrlOpt.isPresent()) {
-            URI reloadModuleUri =
-                new URIBuilder(
-                        baseIvyEngineUrlOpt.get()
-                            + "/ivy/pro/Portal/ivy-devtool/16AE38ED14569A2A/engine.ivp")
-                    .addParameter("command", "module$reload")
-                    .addParameter("pm", module.getName())
-                    .addParameter("pmv", "1")
-                    .build();
-            progressIndicator.setFraction(0.9);
-            progressIndicator.setText(
-                IvyBundle.message("tasks.reloadModule.progress.reloading", module.getName()));
-            Request.Get(reloadModuleUri).execute().returnContent();
-          }
-        } catch (URISyntaxException ex) {
-          throw new IllegalArgumentException(ex);
-        } catch (IOException ex) {
-          throw new RuntimeException(ex);
-        }
+
+        progressIndicator.setFraction(0.7);
+        progressIndicator.setText(
+            IvyBundle.message("tasks.reloadModule.progress.connecting", module.getName()));
+        Optional<String> baseIvyEngineUrlOpt = ivyEngineService.getIvyEngineUrl();
+        baseIvyEngineUrlOpt.ifPresent(url -> ivyDevtoolService.reloadModule(url, module));
+        progressIndicator.setFraction(1);
+        progressIndicator.setText(
+            IvyBundle.message("tasks.reloadModule.progress.reloading", module.getName()));
       }
     };
   }

@@ -19,6 +19,7 @@ import org.jetbrains.annotations.NotNull;
 import saigonwithlove.ivy.intellij.action.DeployModuleAction;
 import saigonwithlove.ivy.intellij.action.OpenSettingsAction;
 import saigonwithlove.ivy.intellij.action.StartEngineAction;
+import saigonwithlove.ivy.intellij.devtool.IvyDevtoolService;
 import saigonwithlove.ivy.intellij.engine.IvyEngineService;
 import saigonwithlove.ivy.intellij.settings.PreferenceService;
 import saigonwithlove.ivy.intellij.shared.Modules;
@@ -53,12 +54,17 @@ public class ModuleView extends JBPanel<ModuleView> {
     PreferenceService preferenceService =
         ServiceManager.getService(project, PreferenceService.class);
     IvyEngineService ivyEngineService = ServiceManager.getService(project, IvyEngineService.class);
+    IvyDevtoolService ivyDevtoolService =
+        ServiceManager.getService(project, IvyDevtoolService.class);
     DefaultActionGroup actions = new DefaultActionGroup();
     // Start Engine
-    actions.add(new StartEngineAction(ivyEngineService));
+    actions.add(
+        new StartEngineAction(project, preferenceService, ivyEngineService, ivyDevtoolService));
 
     // Deploy
-    actions.add(new DeployModuleAction(project, preferenceService, ivyEngineService, modules));
+    actions.add(
+        new DeployModuleAction(
+            project, preferenceService, ivyEngineService, ivyDevtoolService, modules));
 
     // Setting
     actions.add(new Separator());
