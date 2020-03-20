@@ -82,7 +82,6 @@ public class DeployModuleAction extends AnAction {
         project, IvyBundle.message("tasks.reloadModule.title", module.getName())) {
       @Override
       public void run(@NotNull ProgressIndicator progressIndicator) {
-
         progressIndicator.setFraction(0.7);
         progressIndicator.setText(
             IvyBundle.message("tasks.reloadModule.progress.connecting", module.getName()));

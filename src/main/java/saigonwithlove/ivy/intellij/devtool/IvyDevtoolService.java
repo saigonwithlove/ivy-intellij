@@ -27,7 +27,7 @@ public class IvyDevtoolService {
   private static final Logger LOG =
       Logger.getInstance("#" + IvyDevtoolService.class.getCanonicalName());
   private static final String IVY_DEVTOOL_PACKAGE_URL =
-      "https://github.com/saigonwithlove/ivy-devtool/releases/download/v0.2.0/ivy-devtool-0.2.0.iar";
+      "https://github.com/saigonwithlove/ivy-devtool/releases/download/ivy7/ivy-devtool.iar";
   private static final String IVY_DEVTOOL_URL =
       "/ivy/pro/Portal/ivy-devtool/16AE38ED14569A2A/engine.ivp";
 
