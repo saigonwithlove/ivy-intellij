@@ -381,6 +381,15 @@ public class FileSyncProcessor {
         return false;
       }
     }
+
+    // TODO patch to ignore .git, target
+    if (path.toFile().isDirectory()
+        && (path.getFileName().endsWith(".git")
+            || path.getFileName().endsWith("target")
+            || path.getFileName().endsWith("node_modules"))) {
+      return false;
+    }
+
     return true;
   }
 
