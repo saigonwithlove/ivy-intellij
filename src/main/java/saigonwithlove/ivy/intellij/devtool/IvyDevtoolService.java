@@ -1,10 +1,16 @@
 package saigonwithlove.ivy.intellij.devtool;
 
+import com.google.common.collect.ImmutableList;
+import com.intellij.openapi.compiler.CompileStatusNotification;
+import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ModuleRootManager;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -14,12 +20,18 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import org.apache.commons.io.FileUtils;
 import org.apache.http.client.fluent.Request;
 import org.apache.http.client.utils.URIBuilder;
 import org.jetbrains.annotations.NotNull;
+import saigonwithlove.ivy.intellij.mirror.FileSyncProcessor;
 import saigonwithlove.ivy.intellij.settings.PreferenceService;
 import saigonwithlove.ivy.intellij.shared.IvyBundle;
 
@@ -108,8 +120,11 @@ public class IvyDevtoolService {
     }
   }
 
-  public void reloadModule(@NotNull String baseIvyEngineUrl, @NotNull Module module) {
+  public void reloadModule(@NotNull Module module) {
     try {
+      String baseIvyEngineUrl =
+          getIvyEngineUrl()
+              .orElseThrow(() -> new NoSuchElementException("Could not get baseIvyEngineUrl."));
       URI reloadModuleUri =
           new URIBuilder(baseIvyEngineUrl + IVY_DEVTOOL_URL)
               .addParameter("command", "module$reload")
@@ -123,5 +138,72 @@ public class IvyDevtoolService {
     } catch (IOException ex) {
       throw new RuntimeException(ex);
     }
+  }
+
+  public void compileModule(@NotNull Module module, CompileStatusNotification notification) {
+    CompilerManager.getInstance(project).make(module, notification);
+  }
+
+  public void deployModule(@NotNull Module module, @NotNull Task nextTask) {
+    Path source =
+        Paths.get(
+            Objects.requireNonNull(
+                ModuleRootManager.getInstance(module).getContentRoots()[0].getCanonicalPath()));
+    Path target =
+        Paths.get(
+            preferenceService.getState().getIvyEngineDirectory()
+                + "/system/applications/Portal/"
+                + module.getName()
+                + "/1");
+    FileSyncProcessor.Options options = new FileSyncProcessor.Options();
+    FileSyncProcessor fileSyncProcessor = new FileSyncProcessor();
+    FileSyncProcessor.UserInterface ui =
+        new FileSyncProcessor.UserInterface() {
+
+          @Override
+          public void writeInfo(String s) {}
+
+          @Override
+          public void writeInfoTicker() {}
+
+          @Override
+          public void endInfoTicker() {}
+
+          @Override
+          public void writeDebug(String s) {}
+
+          @Override
+          public void listItem(String relativePath, FileSyncProcessor.DiffStatus diffStatus) {}
+        };
+    FileSyncProcessor.Statistics statistics = new FileSyncProcessor.Statistics();
+    try {
+      fileSyncProcessor.main(source, target, options, ui, statistics);
+
+      ProgressManager.getInstance().run(nextTask);
+    } catch (Exception ex) {
+      throw new RuntimeException(ex);
+    }
+  }
+
+  @NotNull
+  private Optional<String> getIvyEngineUrl() {
+    List<String> ports = ImmutableList.of("8080", "8081", "8082", "8083", "8084", "8085");
+    for (String port : ports) {
+      try {
+        int statusCode =
+            Request.Head("http://localhost:" + port + "/ivy/info/index.jsp")
+                .execute()
+                .returnResponse()
+                .getStatusLine()
+                .getStatusCode();
+        if (statusCode == 200) {
+          return Optional.of("http://localhost:" + port);
+        }
+      } catch (Exception ex) {
+        LOG.info(
+            "Ivy Engine is not running on port: " + port + ", got exception: " + ex.getMessage());
+      }
+    }
+    return Optional.empty();
   }
 }

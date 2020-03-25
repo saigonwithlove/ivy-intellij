@@ -64,7 +64,7 @@ public class ModuleView extends JBPanel<ModuleView> {
     // Deploy
     actions.add(
         new DeployModuleAction(
-            project, preferenceService, ivyEngineService, ivyDevtoolService, modules));
+            project, preferenceService, ivyDevtoolService, modules));
 
     // Setting
     actions.add(new Separator());
