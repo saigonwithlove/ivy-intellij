@@ -4,7 +4,7 @@ plugins {
 }
 
 group 'saigonwithlove.ivy'
-version '0.1.9-2019.3'
+version '0.1.10-2019.3'
 
 sourceCompatibility = 1.8
 
@@ -21,7 +21,7 @@ dependencies {
 // See https://github.com/JetBrains/gradle-intellij-plugin/
 intellij {
   version '2019.3'
-  plugins 'java'
+  plugins 'java', 'maven'
 }
 
 patchPluginXml {
