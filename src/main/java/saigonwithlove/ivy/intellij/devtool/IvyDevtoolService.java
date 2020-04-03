@@ -22,6 +22,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.NoSuchElementException;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -29,6 +30,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.http.client.fluent.Request;
 import org.apache.http.client.utils.URIBuilder;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import saigonwithlove.ivy.intellij.engine.IvyEngineService;
 import saigonwithlove.ivy.intellij.mirror.FileSyncProcessor;
 import saigonwithlove.ivy.intellij.settings.PreferenceService;
@@ -58,6 +60,10 @@ public class IvyDevtoolService {
             LocalFileSystem.getInstance().findFileByPath(getIvyDevtoolDirectory()))
         .map(VirtualFile::isDirectory)
         .orElse(Boolean.FALSE);
+  }
+
+  public boolean notExists() {
+    return !exists();
   }
 
   public void install(ProgressIndicator indicator) {
@@ -149,7 +155,7 @@ public class IvyDevtoolService {
     CompilerManager.getInstance(project).make(ivyModule.getModule(), notification);
   }
 
-  public void deployModule(@NotNull IvyModule ivyModule, @NotNull Task nextTask) {
+  public void deployModule(@NotNull IvyModule ivyModule, @Nullable Task nextTask) {
     Path source =
         Paths.get(Preconditions.checkNotNull(ivyModule.getContentRoot().getCanonicalPath()));
     Path target =
@@ -181,34 +187,20 @@ public class IvyDevtoolService {
     FileSyncProcessor.Statistics statistics = new FileSyncProcessor.Statistics();
     try {
       fileSyncProcessor.main(source, target, options, ui, statistics);
-
-      ProgressManager.getInstance().run(nextTask);
+      if (Objects.nonNull(nextTask)) {
+        ProgressManager.getInstance().run(nextTask);
+      }
     } catch (Exception ex) {
       throw new RuntimeException(ex);
     }
   }
 
+  public void deployModule(@NotNull IvyModule ivyModule) {
+    this.deployModule(ivyModule, null);
+  }
+
   @NotNull
   private Optional<String> getIvyEngineUrl() {
-    //    List<String> ports = ImmutableList.of("8080", "8081", "8082", "8083", "8084", "8085");
-    //    for (String port : ports) {
-    //      try {
-    //        int statusCode =
-    //            Request.Head("http://localhost:" + port + "/ivy/info/index.jsp")
-    //                .execute()
-    //                .returnResponse()
-    //                .getStatusLine()
-    //                .getStatusCode();
-    //        if (statusCode == 200) {
-    //          return Optional.of("http://localhost:" + port);
-    //        }
-    //      } catch (Exception ex) {
-    //        LOG.info(
-    //            "Ivy Engine is not running on port: " + port + ", got exception: " +
-    // ex.getMessage());
-    //      }
-    //    }
-    //    return Optional.empty();
     return Optional.ofNullable(ivyEngineService.getRuntime().getPort())
         .map(port -> "http://localhost:" + port);
   }
@@ -231,5 +223,21 @@ public class IvyDevtoolService {
     } catch (IOException ex) {
       throw new RuntimeException(ex);
     }
+  }
+
+  public boolean isDeployed(@NotNull IvyModule ivyModule) {
+    return Optional.ofNullable(
+            LocalFileSystem.getInstance()
+                .findFileByPath(
+                    preferenceService.getCache().getIvyEngineDirectory()
+                        + "/system/applications/Portal/"
+                        + ivyModule.getName()
+                        + "/1"))
+        .map(VirtualFile::isDirectory)
+        .orElse(Boolean.FALSE);
+  }
+
+  public boolean isNotDeployed(@NotNull IvyModule ivyModule) {
+    return !isDeployed(ivyModule);
   }
 }

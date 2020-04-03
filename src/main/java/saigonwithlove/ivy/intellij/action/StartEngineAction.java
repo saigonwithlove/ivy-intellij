@@ -9,11 +9,18 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import java.util.List;
+import java.util.Map;
+import java.util.Observer;
+import java.util.stream.Collectors;
 import org.jetbrains.annotations.NotNull;
 import saigonwithlove.ivy.intellij.devtool.IvyDevtoolService;
+import saigonwithlove.ivy.intellij.engine.IvyEngineRuntime;
 import saigonwithlove.ivy.intellij.engine.IvyEngineService;
 import saigonwithlove.ivy.intellij.settings.PreferenceService;
 import saigonwithlove.ivy.intellij.shared.IvyBundle;
+import saigonwithlove.ivy.intellij.shared.IvyModule;
+import saigonwithlove.ivy.intellij.shared.Notifier;
 
 public class StartEngineAction extends AnAction {
   private static final Logger LOG =
@@ -37,25 +44,74 @@ public class StartEngineAction extends AnAction {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent event) {
-    if (ivyDevtoolService.exists()) {
-      ivyEngineService.getRuntime().start();
-    } else {
-      Task.WithResult<Boolean, RuntimeException> installIvyDevtoolTask =
-          newInstallIvyDevtoolTask(this.project, this.ivyDevtoolService);
-      Boolean ivyDevtoolInstalled = ProgressManager.getInstance().run(installIvyDevtoolTask);
-      this.preferenceService.getCache().getIvyDevtool().setEnabled(ivyDevtoolInstalled);
-      if (ivyDevtoolInstalled) {
-        ivyEngineService.getRuntime().start();
-      }
+    if (!ivyEngineService.isValidIvyEngine()) {
+      Notifier.info(
+          project,
+          new OpenSettingsAction(project),
+          IvyBundle.message("notification.ivyEngineDirectoryInvalid"));
+      return;
+    }
+
+    if (ivyDevtoolService.notExists()) {
+      Boolean ivyDevtoolInstalled = ProgressManager.getInstance().run(newInstallIvyDevtoolTask());
+      preferenceService.getCache().getIvyDevtool().setEnabled(ivyDevtoolInstalled);
+    }
+    if (preferenceService.getCache().getIvyDevtool().isEnabled()) {
+      ProgressManager.getInstance().run(newDeployIvyModulesTask());
+      Observer runtimeReadyObserver =
+          (observable, object) -> {
+            IvyEngineRuntime rt = (IvyEngineRuntime) object;
+            if (rt.getStatus() == IvyEngineRuntime.Status.RUNNING) {
+              ProgressManager.getInstance().run(newUpdateGlobalVariablesTask());
+            }
+          };
+      IvyEngineRuntime runtime = ivyEngineService.getRuntime();
+      runtime.getObservable().addObserver(runtimeReadyObserver);
+      runtime.start();
     }
   }
 
   @NotNull
-  private Task.WithResult<Boolean, RuntimeException> newInstallIvyDevtoolTask(
-      @NotNull Project project, @NotNull IvyDevtoolService ivyDevtoolService) {
+  private Task.Backgroundable newUpdateGlobalVariablesTask() {
+    return new Task.Backgroundable(
+        project,
+        IvyBundle.message("toolWindow.actions.startEngine.progress.updateGlobalVariables")) {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        for (Map.Entry<String, String> entry :
+            preferenceService.getCache().getIvyEngine().getModifiedGlobalVariables().entrySet()) {
+          indicator.setFraction(1.0 - indicator.getFraction() / 2);
+          ivyDevtoolService.updateGlobalVariable(entry.getKey(), entry.getValue());
+        }
+      }
+    };
+  }
+
+  @NotNull
+  private Task.WithResult<Void, RuntimeException> newDeployIvyModulesTask() {
+    return new Task.WithResult<Void, RuntimeException>(
+        project,
+        IvyBundle.message("toolWindow.actions.startEngine.progress.deployIvyModules"),
+        false) {
+      @Override
+      protected Void compute(@NotNull ProgressIndicator indicator) throws RuntimeException {
+        List<IvyModule> ivyModules =
+            preferenceService.getCache().getIvyModules().stream()
+                .filter(ivyDevtoolService::isNotDeployed)
+                .collect(Collectors.toList());
+        for (int i = 0; i < ivyModules.size(); i++) {
+          ivyDevtoolService.deployModule(ivyModules.get(i));
+          indicator.setFraction(((double) i) / (ivyModules.size()));
+        }
+        return null;
+      }
+    };
+  }
+
+  @NotNull
+  private Task.WithResult<Boolean, RuntimeException> newInstallIvyDevtoolTask() {
     return new Task.WithResult<Boolean, RuntimeException>(
         project, IvyBundle.message("tasks.installIvyDevtool.title"), false) {
-
       @Override
       protected Boolean compute(@NotNull ProgressIndicator indicator) throws RuntimeException {
         try {
