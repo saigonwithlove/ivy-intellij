@@ -7,16 +7,25 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import org.jetbrains.annotations.NotNull;
 import saigonwithlove.ivy.intellij.shared.IvyBundle;
+import saigonwithlove.ivy.intellij.toolwindow.engine.EngineView;
+import saigonwithlove.ivy.intellij.toolwindow.module.ModuleView;
 
 public class IvyToolWindowFactory implements ToolWindowFactory {
 
   @Override
   public void createToolWindowContent(@NotNull Project project, @NotNull ToolWindow toolWindow) {
-    ModuleView moduleView = new ModuleView(project);
+    EngineView engineView = new EngineView(project);
     Content engineViewContent =
         ContentFactory.SERVICE
             .getInstance()
-            .createContent(moduleView, IvyBundle.message("toolWindow.module.title"), false);
+            .createContent(engineView, IvyBundle.message("toolWindow.engine.title"), false);
     toolWindow.getContentManager().addContent(engineViewContent);
+
+    ModuleView moduleView = new ModuleView(project);
+    Content moduleViewContent =
+        ContentFactory.SERVICE
+            .getInstance()
+            .createContent(moduleView, IvyBundle.message("toolWindow.module.title"), false);
+    toolWindow.getContentManager().addContent(moduleViewContent);
   }
 }

@@ -4,7 +4,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.compiler.CompileStatusNotification;
-import com.intellij.openapi.module.Module;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -15,33 +15,30 @@ import org.jetbrains.annotations.NotNull;
 import saigonwithlove.ivy.intellij.devtool.IvyDevtoolService;
 import saigonwithlove.ivy.intellij.settings.PreferenceService;
 import saigonwithlove.ivy.intellij.shared.IvyBundle;
+import saigonwithlove.ivy.intellij.shared.IvyModule;
 import saigonwithlove.ivy.intellij.shared.Notifier;
 
 public class DeployModuleAction extends AnAction {
   private Project project;
   private PreferenceService preferenceService;
   private IvyDevtoolService ivyDevtoolService;
-  private JBList<Module> modules;
+  private JBList<IvyModule> modules;
 
-  public DeployModuleAction(
-      @NotNull Project project,
-      @NotNull PreferenceService preferenceService,
-      @NotNull IvyDevtoolService ivyDevtoolService,
-      @NotNull JBList<Module> modules) {
+  public DeployModuleAction(@NotNull Project project, @NotNull JBList<IvyModule> modules) {
     super(
         IvyBundle.message("toolWindow.actions.deployModule.tooltip"),
         IvyBundle.message("toolWindow.actions.deployModule.description"),
         AllIcons.Nodes.Deploy);
     this.project = project;
-    this.preferenceService = preferenceService;
-    this.ivyDevtoolService = ivyDevtoolService;
+    this.preferenceService = ServiceManager.getService(project, PreferenceService.class);
+    this.ivyDevtoolService = ServiceManager.getService(project, IvyDevtoolService.class);
     this.modules = modules;
   }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent event) {
     // Show notification if ivy devtool is disabled
-    if (!preferenceService.getState().isIvyDevToolEnabled()) {
+    if (!preferenceService.getCache().getIvyDevtool().isEnabled()) {
       Notifier.info(
           project,
           new OpenUrlAction(
@@ -51,33 +48,33 @@ public class DeployModuleAction extends AnAction {
       return;
     }
 
-    Module selectedModule = modules.getSelectedValue();
-    if (Objects.isNull(selectedModule)) {
+    IvyModule selectedIvyModule = modules.getSelectedValue();
+    if (Objects.isNull(selectedIvyModule)) {
       Notifier.info(project, IvyBundle.message("notification.deployModuleNotSelected"));
     }
 
     // Reload module
-    Task reloadModuleTask = newReloadModuleTask(project, selectedModule);
+    Task reloadModuleTask = newReloadModuleTask(project, selectedIvyModule);
     // Sync code with Ivy Engine
     Task syncModuleTask =
-        newDeployModuleTask(selectedModule, reloadModuleTask, project, ivyDevtoolService);
+        newDeployModuleTask(selectedIvyModule, reloadModuleTask, project, ivyDevtoolService);
     // Compile Java code
     CompileStatusNotification notification =
         (aborted, errors, warnings, compileContext) -> {
           ProgressManager.getInstance().run(syncModuleTask);
         };
-    ivyDevtoolService.compileModule(selectedModule, notification);
+    ivyDevtoolService.compileModule(selectedIvyModule, notification);
   }
 
-  private Task newReloadModuleTask(@NotNull Project project, @NotNull Module module) {
+  private Task newReloadModuleTask(@NotNull Project project, @NotNull IvyModule ivyModule) {
     return new Task.Backgroundable(
-        project, IvyBundle.message("tasks.reloadModule.title", module.getName())) {
+        project, IvyBundle.message("tasks.reloadModule.title", ivyModule.getName())) {
       @Override
       public void run(@NotNull ProgressIndicator progressIndicator) {
         progressIndicator.setFraction(0.1);
         progressIndicator.setText(
-            IvyBundle.message("tasks.reloadModule.progress.reloading", module.getName()));
-        ivyDevtoolService.reloadModule(module);
+            IvyBundle.message("tasks.reloadModule.progress.reloading", ivyModule.getName()));
+        ivyDevtoolService.reloadModule(ivyModule);
         progressIndicator.setFraction(1);
       }
     };
@@ -85,18 +82,18 @@ public class DeployModuleAction extends AnAction {
 
   @NotNull
   private Task newDeployModuleTask(
-      @NotNull Module module,
+      @NotNull IvyModule ivyModule,
       @NotNull Task nextTask,
       @NotNull Project project,
       @NotNull IvyDevtoolService ivyDevtoolService) {
     return new Task.Backgroundable(
-        project, IvyBundle.message("tasks.syncModule.title", module.getName())) {
+        project, IvyBundle.message("tasks.syncModule.title", ivyModule.getName())) {
       @Override
       public void run(@NotNull ProgressIndicator progressIndicator) {
         progressIndicator.setFraction(0.1);
         progressIndicator.setText(
-            IvyBundle.message("tasks.reloadModule.progress.connecting", module.getName()));
-        ivyDevtoolService.deployModule(module, nextTask);
+            IvyBundle.message("tasks.reloadModule.progress.connecting", ivyModule.getName()));
+        ivyDevtoolService.deployModule(ivyModule, nextTask);
         progressIndicator.setFraction(1);
       }
     };

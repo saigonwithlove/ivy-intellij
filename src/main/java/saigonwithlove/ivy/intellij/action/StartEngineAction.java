@@ -3,6 +3,7 @@ package saigonwithlove.ivy.intellij.action;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -23,32 +24,28 @@ public class StartEngineAction extends AnAction {
   private IvyEngineService ivyEngineService;
   private IvyDevtoolService ivyDevtoolService;
 
-  public StartEngineAction(
-      @NotNull Project project,
-      @NotNull PreferenceService preferenceService,
-      @NotNull IvyEngineService ivyEngineService,
-      @NotNull IvyDevtoolService ivyDevtoolService) {
+  public StartEngineAction(@NotNull Project project) {
     super(
         IvyBundle.message("toolWindow.actions.startEngine.tooltip"),
         IvyBundle.message("toolWindow.actions.startEngine.description"),
         AllIcons.Actions.Execute);
     this.project = project;
-    this.preferenceService = preferenceService;
-    this.ivyEngineService = ivyEngineService;
-    this.ivyDevtoolService = ivyDevtoolService;
+    this.preferenceService = ServiceManager.getService(project, PreferenceService.class);
+    this.ivyEngineService = ServiceManager.getService(project, IvyEngineService.class);
+    this.ivyDevtoolService = ServiceManager.getService(project, IvyDevtoolService.class);
   }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent event) {
     if (ivyDevtoolService.exists()) {
-      ivyEngineService.startIvyEngine();
+      ivyEngineService.getRuntime().start();
     } else {
       Task.WithResult<Boolean, RuntimeException> installIvyDevtoolTask =
           newInstallIvyDevtoolTask(this.project, this.ivyDevtoolService);
       Boolean ivyDevtoolInstalled = ProgressManager.getInstance().run(installIvyDevtoolTask);
-      this.preferenceService.getState().setIvyDevToolEnabled(ivyDevtoolInstalled);
+      this.preferenceService.getCache().getIvyDevtool().setEnabled(ivyDevtoolInstalled);
       if (ivyDevtoolInstalled) {
-        ivyEngineService.startIvyEngine();
+        ivyEngineService.getRuntime().start();
       }
     }
   }

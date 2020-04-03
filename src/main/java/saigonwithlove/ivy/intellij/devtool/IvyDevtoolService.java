@@ -1,16 +1,16 @@
 package saigonwithlove.ivy.intellij.devtool;
 
-import com.google.common.collect.ImmutableList;
+import com.google.common.base.Preconditions;
 import com.intellij.openapi.compiler.CompileStatusNotification;
 import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -21,9 +21,7 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -31,9 +29,11 @@ import org.apache.commons.io.FileUtils;
 import org.apache.http.client.fluent.Request;
 import org.apache.http.client.utils.URIBuilder;
 import org.jetbrains.annotations.NotNull;
+import saigonwithlove.ivy.intellij.engine.IvyEngineService;
 import saigonwithlove.ivy.intellij.mirror.FileSyncProcessor;
 import saigonwithlove.ivy.intellij.settings.PreferenceService;
 import saigonwithlove.ivy.intellij.shared.IvyBundle;
+import saigonwithlove.ivy.intellij.shared.IvyModule;
 
 public class IvyDevtoolService {
   private static final Logger LOG =
@@ -45,14 +45,19 @@ public class IvyDevtoolService {
 
   private Project project;
   private PreferenceService preferenceService;
+  private IvyEngineService ivyEngineService;
 
   public IvyDevtoolService(Project project) {
     this.project = project;
     this.preferenceService = ServiceManager.getService(project, PreferenceService.class);
+    this.ivyEngineService = ServiceManager.getService(project, IvyEngineService.class);
   }
 
   public boolean exists() {
-    return new File(getIvyDevtoolDirectory()).isDirectory();
+    return Optional.ofNullable(
+            LocalFileSystem.getInstance().findFileByPath(getIvyDevtoolDirectory()))
+        .map(VirtualFile::isDirectory)
+        .orElse(Boolean.FALSE);
   }
 
   public void install(ProgressIndicator indicator) {
@@ -62,8 +67,8 @@ public class IvyDevtoolService {
     indicator.setText(IvyBundle.message("tasks.installIvyDevtool.progress.installing"));
     indicator.setFraction(0.5);
     String ivyDevtoolDirectoryText =
-        preferenceService.getState().getIvyEngineDirectory()
-            + preferenceService.getState().getIvyEngineDefinition().getApplicationDirectory()
+        preferenceService.getCache().getIvyEngineDirectory()
+            + preferenceService.getCache().getIvyEngineDefinition().getApplicationDirectory()
             + "/Portal/ivy-devtool/1";
     extract(ivyDevtoolPackage, ivyDevtoolDirectoryText);
     ivyDevtoolPackage.delete();
@@ -73,9 +78,9 @@ public class IvyDevtoolService {
 
   @NotNull
   private String getIvyDevtoolDirectory() {
-    PreferenceService.State preferences = preferenceService.getState();
-    return preferences.getIvyEngineDirectory()
-        + preferences.getIvyEngineDefinition().getApplicationDirectory()
+    PreferenceService.Cache cache = preferenceService.getCache();
+    return cache.getIvyEngineDirectory()
+        + cache.getIvyEngineDefinition().getApplicationDirectory()
         + "/Portal/ivy-devtool/1";
   }
 
@@ -120,7 +125,7 @@ public class IvyDevtoolService {
     }
   }
 
-  public void reloadModule(@NotNull Module module) {
+  public void reloadModule(@NotNull IvyModule ivyModule) {
     try {
       String baseIvyEngineUrl =
           getIvyEngineUrl()
@@ -128,7 +133,7 @@ public class IvyDevtoolService {
       URI reloadModuleUri =
           new URIBuilder(baseIvyEngineUrl + IVY_DEVTOOL_URL)
               .addParameter("command", "module$reload")
-              .addParameter("pm", module.getName())
+              .addParameter("pm", ivyModule.getName())
               .addParameter("pmv", "1")
               .build();
 
@@ -140,20 +145,18 @@ public class IvyDevtoolService {
     }
   }
 
-  public void compileModule(@NotNull Module module, CompileStatusNotification notification) {
-    CompilerManager.getInstance(project).make(module, notification);
+  public void compileModule(@NotNull IvyModule ivyModule, CompileStatusNotification notification) {
+    CompilerManager.getInstance(project).make(ivyModule.getModule(), notification);
   }
 
-  public void deployModule(@NotNull Module module, @NotNull Task nextTask) {
+  public void deployModule(@NotNull IvyModule ivyModule, @NotNull Task nextTask) {
     Path source =
-        Paths.get(
-            Objects.requireNonNull(
-                ModuleRootManager.getInstance(module).getContentRoots()[0].getCanonicalPath()));
+        Paths.get(Preconditions.checkNotNull(ivyModule.getContentRoot().getCanonicalPath()));
     Path target =
         Paths.get(
-            preferenceService.getState().getIvyEngineDirectory()
+            preferenceService.getCache().getIvyEngineDirectory()
                 + "/system/applications/Portal/"
-                + module.getName()
+                + ivyModule.getName()
                 + "/1");
     FileSyncProcessor.Options options = new FileSyncProcessor.Options();
     FileSyncProcessor fileSyncProcessor = new FileSyncProcessor();
@@ -187,23 +190,46 @@ public class IvyDevtoolService {
 
   @NotNull
   private Optional<String> getIvyEngineUrl() {
-    List<String> ports = ImmutableList.of("8080", "8081", "8082", "8083", "8084", "8085");
-    for (String port : ports) {
-      try {
-        int statusCode =
-            Request.Head("http://localhost:" + port + "/ivy/info/index.jsp")
-                .execute()
-                .returnResponse()
-                .getStatusLine()
-                .getStatusCode();
-        if (statusCode == 200) {
-          return Optional.of("http://localhost:" + port);
-        }
-      } catch (Exception ex) {
-        LOG.info(
-            "Ivy Engine is not running on port: " + port + ", got exception: " + ex.getMessage());
-      }
+    //    List<String> ports = ImmutableList.of("8080", "8081", "8082", "8083", "8084", "8085");
+    //    for (String port : ports) {
+    //      try {
+    //        int statusCode =
+    //            Request.Head("http://localhost:" + port + "/ivy/info/index.jsp")
+    //                .execute()
+    //                .returnResponse()
+    //                .getStatusLine()
+    //                .getStatusCode();
+    //        if (statusCode == 200) {
+    //          return Optional.of("http://localhost:" + port);
+    //        }
+    //      } catch (Exception ex) {
+    //        LOG.info(
+    //            "Ivy Engine is not running on port: " + port + ", got exception: " +
+    // ex.getMessage());
+    //      }
+    //    }
+    //    return Optional.empty();
+    return Optional.ofNullable(ivyEngineService.getRuntime().getPort())
+        .map(port -> "http://localhost:" + port);
+  }
+
+  public void updateGlobalVariable(@NotNull String name, @NotNull String value) {
+    try {
+      String baseIvyEngineUrl =
+          getIvyEngineUrl()
+              .orElseThrow(() -> new NoSuchElementException("Could not get baseIvyEngineUrl."));
+      URI setGlobalVariableUri =
+          new URIBuilder(baseIvyEngineUrl + IVY_DEVTOOL_URL)
+              .addParameter("command", "global-variable$set")
+              .addParameter("name", name)
+              .addParameter("value", value)
+              .build();
+
+      Request.Get(setGlobalVariableUri).execute().returnContent();
+    } catch (URISyntaxException ex) {
+      throw new IllegalArgumentException(ex);
+    } catch (IOException ex) {
+      throw new RuntimeException(ex);
     }
-    return Optional.empty();
   }
 }
