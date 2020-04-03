@@ -38,16 +38,11 @@ public class IvyEngineService {
 
   public void addLibraries() {
     LibraryTable libraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable();
-    preferenceService
-        .getCache()
-        .getIvyEngineDefinition()
-        .getLibraries()
+    String ivyEngineDirectory = preferenceService.getCache().getIvyEngineDirectory();
+    preferenceService.getCache().getIvyEngineDefinition().getLibraries().stream()
+        .filter(library -> IvyLibraries.isNotDefined(library, ivyEngineDirectory))
         .forEach(
-            ivyLibrary ->
-                IvyLibraries.defineLibrary(
-                    preferenceService.getCache().getIvyEngineDirectory(),
-                    libraryTable,
-                    ivyLibrary));
+            ivyLibrary -> IvyLibraries.defineLibrary(ivyEngineDirectory, libraryTable, ivyLibrary));
   }
 
   public boolean libraryDirectoryExists() {
