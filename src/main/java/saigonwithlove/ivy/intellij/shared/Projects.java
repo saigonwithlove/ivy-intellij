@@ -7,17 +7,16 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.experimental.UtilityClass;
-import org.apache.maven.model.Model;
 import org.jetbrains.annotations.NotNull;
 
 @UtilityClass
 public class Projects {
   @NotNull
-  public static List<Model> getIvyModels(@NotNull Project project) {
+  public static List<IvyModule> getIvyModules(@NotNull Project project) {
     return Arrays.stream(ModuleManager.getInstance(project).getModules())
-        .filter(Modules::isMavenModel)
-        .flatMap(module -> Modules.toMavenModel(module).map(Stream::of).orElseGet(Stream::empty))
-        .filter(Modules::isIvyModel)
+        .map(Modules::toIvyModule)
+        .flatMap(moduleOpt -> moduleOpt.map(Stream::of).orElseGet(Stream::empty))
+        .sorted((a, b) -> a.getName().compareToIgnoreCase(b.getName()))
         .collect(Collectors.toList());
   }
 }

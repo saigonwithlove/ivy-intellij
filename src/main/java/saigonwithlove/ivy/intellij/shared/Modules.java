@@ -26,7 +26,6 @@ import org.jetbrains.annotations.NotNull;
 
 @UtilityClass
 public class Modules {
-  public static final String IVY_DEVTOOL = "ivy-devtool";
   public static final Comparator<Module> MODULE_COMPARATOR = createModuleComparator();
 
   private static final Logger LOG = Logger.getInstance("#" + Modules.class.getCanonicalName());
@@ -69,25 +68,28 @@ public class Modules {
 
   @NotNull
   public static List<Dependency> getMissingIvyDependencies(
-      @NotNull Module module, @NotNull List<Model> models) {
-    Optional<Model> modelOpt = Modules.toMavenModel(module);
+      @NotNull IvyModule ivyModule, @NotNull List<IvyModule> ivyModules) {
     Function<Model, List<Dependency>> dependencyMapper =
         model ->
             model.getDependencies().stream()
                 .filter(dependency -> IVY_PACKAGE_EXTENSION.equalsIgnoreCase(dependency.getType()))
-                .filter(dependency -> models.stream().noneMatch(resolveDependency(dependency)))
+                .filter(dependency -> ivyModules.stream().noneMatch(resolveDependency(dependency)))
                 .collect(Collectors.toList());
-    return modelOpt.map(dependencyMapper).orElse(Collections.emptyList());
+    return Optional.of(ivyModule)
+        .map(IvyModule::getMavenModel)
+        .map(dependencyMapper)
+        .orElse(Collections.emptyList());
   }
 
   @NotNull
-  private static Predicate<Model> resolveDependency(@NotNull Dependency dependency) {
-    return model -> {
+  private static Predicate<IvyModule> resolveDependency(@NotNull Dependency dependency) {
+    return ivyModule -> {
       try {
-        return dependency.getGroupId().equals(model.getGroupId())
-            && dependency.getArtifactId().equals(model.getArtifactId())
+        return dependency.getGroupId().equals(ivyModule.getMavenModel().getGroupId())
+            && dependency.getArtifactId().equals(ivyModule.getMavenModel().getArtifactId())
             && VersionRange.createFromVersionSpec(dependency.getVersion())
-                .containsVersion(new DefaultArtifactVersion(model.getVersion()));
+                .containsVersion(
+                    new DefaultArtifactVersion(ivyModule.getMavenModel().getVersion()));
       } catch (InvalidVersionSpecificationException ex) {
         LOG.error(ex);
         return false;
@@ -103,7 +105,17 @@ public class Modules {
   }
 
   private static Optional<VirtualFile> getPomFile(@NotNull Module module) {
-    return Optional.ofNullable(
-        ModuleRootManager.getInstance(module).getContentRoots()[0].findChild("pom.xml"));
+    return Optional.ofNullable(Modules.getContentRoot(module).findChild("pom.xml"));
+  }
+
+  @NotNull
+  public static VirtualFile getContentRoot(@NotNull Module module) {
+    return ModuleRootManager.getInstance(module).getContentRoots()[0];
+  }
+
+  public static Optional<IvyModule> toIvyModule(@NotNull Module module) {
+    return toMavenModel(module)
+        .filter(Modules::isIvyModel)
+        .map(mavenModel -> new IvyModule(module, mavenModel));
   }
 }

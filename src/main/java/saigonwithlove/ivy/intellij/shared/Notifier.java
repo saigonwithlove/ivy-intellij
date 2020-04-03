@@ -10,14 +10,15 @@ import org.jetbrains.annotations.NotNull;
 
 @UtilityClass
 public class Notifier {
-  private final NotificationGroup GROUP =
+  private static final NotificationGroup GROUP =
       new NotificationGroup("Ivy", NotificationDisplayType.BALLOON, true);
 
-  public void info(@NotNull Project project, @NotNull String content) {
+  public static void info(@NotNull Project project, @NotNull String content) {
     GROUP.createNotification(content, NotificationType.INFORMATION).notify(project);
   }
 
-  public void info(@NotNull Project project, @NotNull AnAction action, @NotNull String content) {
+  public static void info(
+      @NotNull Project project, @NotNull AnAction action, @NotNull String content) {
     GROUP
         .createNotification(content, NotificationType.INFORMATION)
         .addAction(action)
