@@ -1,12 +1,10 @@
 package saigonwithlove.ivy.intellij.settings;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.MessageDialogBuilder;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBPanel;
@@ -18,17 +16,11 @@ import java.awt.GridBagLayout;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
 import org.apache.commons.lang.StringUtils;
-import org.apache.maven.artifact.versioning.ArtifactVersion;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import saigonwithlove.ivy.intellij.action.OpenSettingsAction;
-import saigonwithlove.ivy.intellij.engine.IvyEngineDefinition;
 import saigonwithlove.ivy.intellij.engine.IvyEngineService;
-import saigonwithlove.ivy.intellij.engine.IvyEngineVersions;
 import saigonwithlove.ivy.intellij.shared.IvyBundle;
-import saigonwithlove.ivy.intellij.shared.Projects;
-import saigonwithlove.ivy.intellij.shared.Notifier;
 
 public class IvySettingsView implements SearchableConfigurable, Configurable.NoScroll {
   private Project project;
@@ -36,13 +28,10 @@ public class IvySettingsView implements SearchableConfigurable, Configurable.NoS
   private IvyEngineService ivyEngineService;
   private JBTextField engineDirectoryField;
 
-  public IvySettingsView(
-      @NotNull Project project,
-      @NotNull PreferenceService preferenceService,
-      @NotNull IvyEngineService ivyEngineService) {
+  public IvySettingsView(@NotNull Project project) {
     this.project = project;
-    this.preferenceService = preferenceService;
-    this.ivyEngineService = ivyEngineService;
+    this.preferenceService = ServiceManager.getService(project, PreferenceService.class);
+    this.ivyEngineService = ServiceManager.getService(project, IvyEngineService.class);
     this.engineDirectoryField = new JBTextField();
   }
 
@@ -61,8 +50,8 @@ public class IvySettingsView implements SearchableConfigurable, Configurable.NoS
   @Nullable
   @Override
   public JComponent createComponent() {
-    PreferenceService.State preferences = preferenceService.getState();
-    engineDirectoryField.setText(preferences.getIvyEngineDirectory());
+    PreferenceService.Cache cache = preferenceService.getCache();
+    engineDirectoryField.setText(cache.getIvyEngineDirectory());
 
     JBPanel wrapper = new JBPanel(new GridBagLayout());
     GridBagConstraints constraints = new GridBagConstraints();
@@ -87,52 +76,19 @@ public class IvySettingsView implements SearchableConfigurable, Configurable.NoS
 
   @Override
   public boolean isModified() {
-    PreferenceService.State preferences = preferenceService.getState();
+    PreferenceService.Cache preferences = preferenceService.getCache();
     return !StringUtils.equals(preferences.getIvyEngineDirectory(), engineDirectoryField.getText());
   }
 
   @Override
   public void apply() throws ConfigurationException {
-    PreferenceService.State preferences = preferenceService.getState();
-    preferences.setIvyEngineDirectory(engineDirectoryField.getText());
-
-    if (Projects.getIvyModels(project).isEmpty()) {
-      return;
-    } else {
-      preferences.setEnabled(true);
-    }
-
-    if (!ivyEngineService.isValidIvyEngine()) {
-      Notifier.info(
-          project,
-          new OpenSettingsAction(project),
-          IvyBundle.message("notification.ivyEngineDirectoryInvalid"));
-      return;
-    }
-
-    ArtifactVersion ivyEngineVersion =
-        IvyEngineVersions.parseVersion(preferences.getIvyEngineDirectory());
-    preferences.setIvyEngineDefinition(IvyEngineDefinition.fromVersion(ivyEngineVersion));
-    if (ivyEngineService.libraryDirectoryExists()) {
-      ApplicationManager.getApplication().runWriteAction(() -> ivyEngineService.addLibraries());
-    } else {
-      int result =
-          MessageDialogBuilder.yesNo(
-                  IvyBundle.message("settings.engine.startEngineDialog.title"),
-                  IvyBundle.message("settings.engine.startEngineDialog.message"))
-              .yesText(IvyBundle.message("settings.engine.startEngineDialog.confirm"))
-              .noText(IvyBundle.message("settings.engine.startEngineDialog.cancel"))
-              .project(project)
-              .show();
-      if (result == Messages.YES) {
-        ivyEngineService.startIvyEngine();
-      }
-    }
+    PreferenceService.Cache cache = preferenceService.getCache();
+    cache.setIvyEngineDirectory(engineDirectoryField.getText());
   }
 
   @Override
   public void reset() {
-    PreferenceService.State preferences = preferenceService.getState();
-    engineDirectoryField.setText(preferences.getIvyEngineDirectory());
+    PreferenceService.Cache cache = preferenceService.getCache();
+    engineDirectoryField.setText(cache.getIvyEngineDirectory());
   }
 }
