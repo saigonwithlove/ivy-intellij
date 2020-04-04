@@ -56,10 +56,11 @@ public class IvyDevtoolService {
   }
 
   public boolean exists() {
-    return Optional.ofNullable(
-            LocalFileSystem.getInstance().findFileByPath(getIvyDevtoolDirectory()))
-        .map(VirtualFile::isDirectory)
-        .orElse(Boolean.FALSE);
+    Optional<VirtualFile> ivyDevtoolDirectoryOpt =
+        Optional.ofNullable(LocalFileSystem.getInstance().findFileByPath(getIvyDevtoolDirectory()));
+    ivyDevtoolDirectoryOpt.ifPresent(
+        ivyDevtoolDirectory -> ivyDevtoolDirectory.refresh(false, false));
+    return ivyDevtoolDirectoryOpt.map(VirtualFile::isDirectory).orElse(Boolean.FALSE);
   }
 
   public boolean notExists() {
@@ -226,15 +227,17 @@ public class IvyDevtoolService {
   }
 
   public boolean isDeployed(@NotNull IvyModule ivyModule) {
-    return Optional.ofNullable(
+    Optional<VirtualFile> processModelVersionDirectoryOpt =
+        Optional.ofNullable(
             LocalFileSystem.getInstance()
                 .findFileByPath(
                     preferenceService.getCache().getIvyEngineDirectory()
                         + "/system/applications/Portal/"
                         + ivyModule.getName()
-                        + "/1"))
-        .map(VirtualFile::isDirectory)
-        .orElse(Boolean.FALSE);
+                        + "/1"));
+    processModelVersionDirectoryOpt.ifPresent(
+        processModelVersionDirectory -> processModelVersionDirectory.refresh(false, false));
+    return processModelVersionDirectoryOpt.map(VirtualFile::isDirectory).orElse(Boolean.FALSE);
   }
 
   public boolean isNotDeployed(@NotNull IvyModule ivyModule) {
