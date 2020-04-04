@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Fixed
+- Global Variables are not displayed when Ivy Tool Window was not opened at the beginning.
 
 ## [v0.1.10-2019.3] - 2020-04-04
 ### Added

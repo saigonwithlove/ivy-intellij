@@ -51,8 +51,7 @@ public class EngineView extends JBPanel<EngineView> {
     // Application tree
     //    MutableTreeNode application = new ApplicationNode("Portal");
     // Global variable tree
-    MutableTreeNode globalVariables =
-        new GlobalVariableRoot(IvyBundle.message("toolWindow.engine.globalVariable.title"));
+    MutableTreeNode globalVariablesRoot = newGlobalVariables(preferenceService);
     // System property tree
     //    MutableTreeNode systemProperties =
     //        new GlobalVariableRoot(IvyBundle.message("toolWindow.engine.systemProperty.title"));
@@ -60,7 +59,7 @@ public class EngineView extends JBPanel<EngineView> {
     // EngineView root node
     MutableTreeNode root = new DefaultMutableTreeNode();
     //    root.insert(application, 0);
-    root.insert(globalVariables, 0);
+    root.insert(globalVariablesRoot, 0);
     //    root.insert(systemProperties, 2);
     Tree tree = new Tree(root);
     tree.setRootVisible(false);
@@ -69,19 +68,8 @@ public class EngineView extends JBPanel<EngineView> {
 
     Observer globalVariablesObserver =
         (observable, object) -> {
-          List<Configuration> items =
-              ((Map<String, String>) object)
-                  .entrySet().stream()
-                      .map(entry -> new Configuration(entry.getKey(), entry.getValue()))
-                      .sorted((a, b) -> a.getName().compareToIgnoreCase(b.getName()))
-                      .collect(Collectors.toList());
-          for (int i = 0; i < globalVariables.getChildCount(); i++) {
-            globalVariables.remove(i);
-          }
-          for (int i = 0; i < items.size(); i++) {
-            globalVariables.insert(new GlobalVariableNode(items.get(i)), i);
-          }
-          ((DefaultTreeModel) tree.getModel()).reload(globalVariables);
+          updateGlobalVariables(globalVariablesRoot, (Map<String, String>) object);
+          ((DefaultTreeModel) tree.getModel()).reload(globalVariablesRoot);
         };
     cache.getIvyEngine().getGlobalVariablesObservable().addObserver(globalVariablesObserver);
 
@@ -94,6 +82,15 @@ public class EngineView extends JBPanel<EngineView> {
     JBScrollPane scrollPanel = new JBScrollPane(panel);
     scrollPanel.setBorder(new SideBorder(JBColor.border(), SideBorder.LEFT));
     return scrollPanel;
+  }
+
+  @NotNull
+  private MutableTreeNode newGlobalVariables(PreferenceService preferenceService) {
+    MutableTreeNode globalVariablesRoot =
+        new GlobalVariableRoot(IvyBundle.message("toolWindow.engine.globalVariable.title"));
+    this.updateGlobalVariables(
+        globalVariablesRoot, preferenceService.getCache().getIvyEngine().getGlobalVariables());
+    return globalVariablesRoot;
   }
 
   @NotNull
@@ -110,5 +107,20 @@ public class EngineView extends JBPanel<EngineView> {
     return ActionManager.getInstance()
         .createActionToolbar("EngineViewToolbar", actions, false)
         .getComponent();
+  }
+
+  private void updateGlobalVariables(
+      @NotNull MutableTreeNode globalVariablesRoot, @NotNull Map<String, String> globalVariables) {
+    List<Configuration> items =
+        globalVariables.entrySet().stream()
+            .map(entry -> new Configuration(entry.getKey(), entry.getValue()))
+            .sorted((a, b) -> a.getName().compareToIgnoreCase(b.getName()))
+            .collect(Collectors.toList());
+    for (int i = 0; i < globalVariablesRoot.getChildCount(); i++) {
+      globalVariablesRoot.remove(i);
+    }
+    for (int i = 0; i < items.size(); i++) {
+      globalVariablesRoot.insert(new GlobalVariableNode(items.get(i)), i);
+    }
   }
 }
