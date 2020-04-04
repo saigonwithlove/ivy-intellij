@@ -26,10 +26,21 @@ intellij {
 
 patchPluginXml {
   changeNotes """
-      <h3>Feature</h3>
+      <h3>v0.1.10-2019.3 - 2020-04-04</h3>
+      <h4>Added<h4>
       <ul>
-        <li>Provide Axon.ivy Libraries: can compile all Java classes within Ivy project.</li>
-        <li>Run project on Ivy Engine: Ivy plugin is able to start an Ivy Engine and deploy Ivy projects to it.</li>
+        <li>CHANGELOG.md to keep track changes.</li>
+        <li>EngineView with ability to change Global Variable's value.</li>
+        <li>Deploy modules which are not exist in Axon.ivy Engine when Axon.ivy Engine started.</li>
+        <li>Update modified Global Variables in Axon.ivy Engine when Axon.ivy Engine started (because the old data was lost when Axon.ivy Engine stopped, we need to restore the modified values).</li>
+      </ul>
+      <h4>Changed</h4>
+      <ul>
+        <li>Ignore <b>.git</b>, <b>target</b>, <b>node_modules</b> when deploy module to Axon.ivy Engine.</li>
+        <li>Logic/Workflow could be deployed without restart Axon.ivy Engine, with the help of <b>ivy-devtool-0.2.2</b>.</li>
+        <li>Refine border and size of ModuleView for consistent background in Bright theme.</li>
+        <li>Reduce startup time by skipping created libraries.</li>
+        <li>Start Engine and Config Actions moved from ModuleView to EngineView.</li>
       </ul>
       """
 }
