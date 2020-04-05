@@ -104,7 +104,7 @@ public class Modules {
         .orElse(Boolean.FALSE);
   }
 
-  private static Optional<VirtualFile> getPomFile(@NotNull Module module) {
+  public static Optional<VirtualFile> getPomFile(@NotNull Module module) {
     return Optional.ofNullable(Modules.getContentRoot(module).findChild("pom.xml"));
   }
 
@@ -114,8 +114,6 @@ public class Modules {
   }
 
   public static Optional<IvyModule> toIvyModule(@NotNull Module module) {
-    return toMavenModel(module)
-        .filter(Modules::isIvyModel)
-        .map(mavenModel -> new IvyModule(module, mavenModel));
+    return Optional.of(module).filter(Modules::isIvyModule).map(IvyModule::new);
   }
 }
