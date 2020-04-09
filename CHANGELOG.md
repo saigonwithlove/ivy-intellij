@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Deployed module directories were cached lead to wrong deployment detection.
 - Ivy Modules's version and dependencies are not get updated when pom.xml had been changed.
 - NullPointerException when checking Ivy Devtool exists in InitializationActivity.
+- Jar files were not updated in Virtual File System, lead to Global Libraries were not created correctly.
 
 ## [v0.1.10-2019.3] - 2020-04-04
 ### Added

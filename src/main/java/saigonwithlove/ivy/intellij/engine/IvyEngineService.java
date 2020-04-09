@@ -5,9 +5,11 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import java.io.File;
 import java.util.NoSuchElementException;
 import java.util.Objects;
+import java.util.Optional;
 import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import saigonwithlove.ivy.intellij.settings.PreferenceService;
@@ -39,6 +41,8 @@ public class IvyEngineService {
   public void addLibraries() {
     LibraryTable libraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable();
     String ivyEngineDirectory = preferenceService.getCache().getIvyEngineDirectory();
+    Optional.ofNullable(LocalFileSystem.getInstance().findFileByPath(ivyEngineDirectory))
+        .ifPresent(directory -> directory.refresh(false, true));
     preferenceService.getCache().getIvyEngineDefinition().getLibraries().stream()
         .filter(library -> IvyLibraries.isNotDefined(library, ivyEngineDirectory))
         .forEach(
