@@ -43,8 +43,10 @@ public class IvyEngineService {
     String ivyEngineDirectory = preferenceService.getCache().getIvyEngineDirectory();
     Optional.ofNullable(LocalFileSystem.getInstance().findFileByPath(ivyEngineDirectory))
         .ifPresent(directory -> directory.refresh(false, true));
-    preferenceService.getCache().getIvyEngineDefinition().getLibraries().stream()
-        .filter(library -> IvyLibraries.isNotDefined(library, ivyEngineDirectory))
+    preferenceService
+        .getCache()
+        .getIvyEngineDefinition()
+        .getLibraries()
         .forEach(
             ivyLibrary -> IvyLibraries.defineLibrary(ivyEngineDirectory, libraryTable, ivyLibrary));
   }

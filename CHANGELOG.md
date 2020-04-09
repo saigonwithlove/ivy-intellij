@@ -5,6 +5,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Changed
+- Re-create Ivy's Global Libraries to prevent wrong libraries were created and stay forever.
+
 ### Fixed
 - Global Variables are not displayed when Ivy Tool Window was not opened at the beginning.
 - Deployed module directories were cached lead to wrong deployment detection.
