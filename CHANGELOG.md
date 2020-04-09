@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Global Variables are not displayed when Ivy Tool Window was not opened at the beginning.
 - Deployed module directories were cached lead to wrong deployment detection.
 - Ivy Modules's version and dependencies are not get updated when pom.xml had been changed.
+- NullPointerException when checking Ivy Devtool exists in InitializationActivity.
 
 ## [v0.1.10-2019.3] - 2020-04-04
 ### Added

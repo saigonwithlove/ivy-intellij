@@ -34,8 +34,6 @@ public class InitializationActivity implements StartupActivity {
     PreferenceService.State state = preferenceService.getState();
     PreferenceService.Cache cache = preferenceService.getCache();
 
-    // Update toggle ivy dev tool status
-    cache.getIvyEngineDirectoryObservable().addObserver(toggleIvyDevtool(ivyDevtoolService, cache));
     // Update ivy engine definition and libraries
     cache
         .getIvyEngineDirectoryObservable()
@@ -78,6 +76,8 @@ public class InitializationActivity implements StartupActivity {
     return (observable, object) -> {
       IvyEngineService ivyEngineService =
           ServiceManager.getService(project, IvyEngineService.class);
+      IvyDevtoolService ivyDevtoolService =
+          ServiceManager.getService(project, IvyDevtoolService.class);
       if (!ivyEngineService.isValidIvyEngine()) {
         Notifier.info(
             project,
@@ -88,6 +88,8 @@ public class InitializationActivity implements StartupActivity {
       ArtifactVersion ivyEngineVersion =
           IvyEngineVersions.parseVersion(cache.getIvyEngineDirectory());
       cache.setIvyEngineDefinition(IvyEngineDefinition.fromVersion(ivyEngineVersion));
+      // Update toggle ivy dev tool status
+      cache.getIvyDevtool().setEnabled(ivyDevtoolService.exists());
       if (ivyEngineService.libraryDirectoryExists()) {
         ApplicationManager.getApplication()
             .runWriteAction(
@@ -116,12 +118,6 @@ public class InitializationActivity implements StartupActivity {
         }
       }
     };
-  }
-
-  @NotNull
-  private Observer toggleIvyDevtool(
-      IvyDevtoolService ivyDevtoolService, PreferenceService.Cache cache) {
-    return (observable, object) -> cache.getIvyDevtool().setEnabled(ivyDevtoolService.exists());
   }
 
   @NotNull
