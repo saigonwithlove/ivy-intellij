@@ -4,7 +4,7 @@ plugins {
 }
 
 group 'saigonwithlove.ivy'
-version '0.1.11-2019.3'
+version '0.1.12'
 
 sourceCompatibility = 1.8
 
@@ -20,13 +20,15 @@ dependencies {
 
 // See https://github.com/JetBrains/gradle-intellij-plugin/
 intellij {
-  version '2019.3'
+  version '2020.1'
   plugins 'java'
 }
 
 patchPluginXml {
+  sinceBuild '193'
+  untilBuild '201.*'
   changeNotes """
-      <h3>v0.1.11-2019.3] - 2020-04-09</h3>
+      <h3>v0.1.11-2019.3 - 2020-04-09</h3>
       <h4>Changed</h4>
       <ul>
         <li>Re-create Ivy's Global Libraries to prevent wrong libraries were created and stay forever.</li>
