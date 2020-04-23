@@ -153,6 +153,7 @@ public class IvyEngineRuntime {
         Matcher matcher = PORT_PATTERN.matcher(event.getText());
         if (matcher.find()) {
           this.runtime.port = matcher.group(1);
+          LOG.info("Axon.ivy Engine is running on port: " + this.runtime.port);
         }
       }
 

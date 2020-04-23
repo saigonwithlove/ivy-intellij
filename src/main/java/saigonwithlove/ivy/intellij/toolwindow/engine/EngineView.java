@@ -53,14 +53,14 @@ public class EngineView extends JBPanel<EngineView> {
     // Global variable tree
     MutableTreeNode globalVariablesRoot = newGlobalVariables(preferenceService);
     // System property tree
-    //    MutableTreeNode systemProperties =
-    //        new GlobalVariableRoot(IvyBundle.message("toolWindow.engine.systemProperty.title"));
+    MutableTreeNode systemPropertyRoot =
+        new SystemPropertyRoot(IvyBundle.message("toolWindow.engine.systemProperty.title"));
 
     // EngineView root node
     MutableTreeNode root = new DefaultMutableTreeNode();
     //    root.insert(application, 0);
     root.insert(globalVariablesRoot, 0);
-    //    root.insert(systemProperties, 2);
+    root.insert(systemPropertyRoot, 1);
     Tree tree = new Tree(root);
     tree.setRootVisible(false);
     tree.setCellRenderer(new EngineViewCellRenderer());
@@ -72,6 +72,13 @@ public class EngineView extends JBPanel<EngineView> {
           ((DefaultTreeModel) tree.getModel()).reload(globalVariablesRoot);
         };
     cache.getIvyEngine().getGlobalVariablesObservable().addObserver(globalVariablesObserver);
+
+    Observer systemPropertiesObserver =
+        (observable, object) -> {
+          updateSystemProperties(systemPropertyRoot, (Map<String, String>) object);
+          ((DefaultTreeModel) tree.getModel()).reload(systemPropertyRoot);
+        };
+    cache.getIvyEngine().getSystemPropertiesObservable().addObserver(systemPropertiesObserver);
 
     GridBagConstraints constraints = new GridBagConstraints();
     constraints.anchor = GridBagConstraints.FIRST_LINE_START;
@@ -121,6 +128,21 @@ public class EngineView extends JBPanel<EngineView> {
     }
     for (int i = 0; i < items.size(); i++) {
       globalVariablesRoot.insert(new GlobalVariableNode(items.get(i)), i);
+    }
+  }
+
+  private void updateSystemProperties(
+      MutableTreeNode systemPropertyRoot, Map<String, String> systemProperties) {
+    List<Configuration> items =
+        systemProperties.entrySet().stream()
+            .map(entry -> new Configuration(entry.getKey(), entry.getValue()))
+            .sorted((a, b) -> a.getName().compareToIgnoreCase(b.getName()))
+            .collect(Collectors.toList());
+    for (int i = 0; i < systemPropertyRoot.getChildCount(); i++) {
+      systemPropertyRoot.remove(i);
+    }
+    for (int i = 0; i < items.size(); i++) {
+      systemPropertyRoot.insert(new SystemPropertyNode(items.get(i)), i);
     }
   }
 }

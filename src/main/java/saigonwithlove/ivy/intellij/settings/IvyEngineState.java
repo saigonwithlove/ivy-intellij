@@ -21,8 +21,10 @@ public class IvyEngineState {
   @Builder.Default private Map<String, String> globalVariables = new HashMap<>();
   @Builder.Default private Map<String, String> defaultGlobalVariables = new HashMap<>();
   @Builder.Default private Map<String, String> modifiedGlobalVariables = new HashMap<>();
+  @Builder.Default private Map<String, String> systemProperties = new HashMap<>();
 
   @Builder.Default private GeneralObservable globalVariablesObservable = new GeneralObservable();
+  @Builder.Default private GeneralObservable systemPropertiesObservable = new GeneralObservable();
 
   @Builder.Default
   private GeneralObservable modifiedGlobalVariablesObservable = new GeneralObservable();
@@ -49,6 +51,11 @@ public class IvyEngineState {
         this.syncGlobalVariables(this.defaultGlobalVariables, this.modifiedGlobalVariables);
     this.getModifiedGlobalVariablesObservable().notifyObservers(this.modifiedGlobalVariables);
     this.globalVariablesObservable.notifyObservers(this.globalVariables);
+  }
+
+  public void setSystemProperties(@NotNull Map<String, String> systemProperties) {
+    this.systemProperties = systemProperties;
+    this.systemPropertiesObservable.notifyObservers(this.systemProperties);
   }
 
   @NotNull

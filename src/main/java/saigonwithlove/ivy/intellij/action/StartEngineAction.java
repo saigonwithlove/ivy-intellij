@@ -63,6 +63,7 @@ public class StartEngineAction extends AnAction {
             IvyEngineRuntime rt = (IvyEngineRuntime) object;
             if (rt.getStatus() == IvyEngineRuntime.Status.RUNNING) {
               ProgressManager.getInstance().run(newUpdateGlobalVariablesTask());
+              ProgressManager.getInstance().run(newUpdateSystemPropertiesTask());
             }
           };
       IvyEngineRuntime runtime = ivyEngineService.getRuntime();
@@ -83,6 +84,17 @@ public class StartEngineAction extends AnAction {
           indicator.setFraction(1.0 - indicator.getFraction() / 2);
           ivyDevtoolService.updateGlobalVariable(entry.getKey(), entry.getValue());
         }
+      }
+    };
+  }
+
+  @NotNull
+  private Task.Backgroundable newUpdateSystemPropertiesTask() {
+    return new Task.Backgroundable(project, "Update System Properties") {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        Map<String, String> systemProperties = ivyDevtoolService.getSystemProperties();
+        preferenceService.getCache().getIvyEngine().setSystemProperties(systemProperties);
       }
     };
   }

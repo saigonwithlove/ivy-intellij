@@ -1,5 +1,6 @@
 package saigonwithlove.ivy.intellij.devtool;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
 import com.intellij.openapi.compiler.CompileStatusNotification;
 import com.intellij.openapi.compiler.CompilerManager;
@@ -21,6 +22,7 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
@@ -242,5 +244,28 @@ public class IvyDevtoolService {
 
   public boolean isNotDeployed(@NotNull IvyModule ivyModule) {
     return !isDeployed(ivyModule);
+  }
+
+  @NotNull
+  public Map<String, String> getSystemProperties() {
+    try {
+      String baseIvyEngineUrl =
+          getIvyEngineUrl()
+              .orElseThrow(() -> new NoSuchElementException("Could not get baseIvyEngineUrl."));
+      URI setGlobalVariableUri =
+          new URIBuilder(baseIvyEngineUrl + IVY_DEVTOOL_URL)
+              .addParameter("command", "system-property$get-all")
+              .build();
+
+      return (Map<String, String>)
+          new ObjectMapper()
+              .readValue(
+                  Request.Get(setGlobalVariableUri).execute().returnContent().asStream(),
+                  Map.class);
+    } catch (URISyntaxException ex) {
+      throw new IllegalArgumentException(ex);
+    } catch (IOException ex) {
+      throw new RuntimeException(ex);
+    }
   }
 }
