@@ -63,7 +63,7 @@ public class StartEngineAction extends AnAction {
             IvyEngineRuntime rt = (IvyEngineRuntime) object;
             if (rt.getStatus() == IvyEngineRuntime.Status.RUNNING) {
               ProgressManager.getInstance().run(newUpdateGlobalVariablesTask());
-              ProgressManager.getInstance().run(newUpdateSystemPropertiesTask());
+              ProgressManager.getInstance().run(newUpdateServerPropertiesTask());
             }
           };
       IvyEngineRuntime runtime = ivyEngineService.getRuntime();
@@ -79,22 +79,37 @@ public class StartEngineAction extends AnAction {
         IvyBundle.message("toolWindow.actions.startEngine.progress.updateGlobalVariables")) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        for (Map.Entry<String, String> entry :
-            preferenceService.getCache().getIvyEngine().getModifiedGlobalVariables().entrySet()) {
-          indicator.setFraction(1.0 - indicator.getFraction() / 2);
-          ivyDevtoolService.updateGlobalVariable(entry.getKey(), entry.getValue());
-        }
+        Map<String, String> globalVariables =
+            preferenceService.getCache().getIvyEngine().getGlobalVariables();
+        Map<String, String> modifiedGlobalVariables =
+            preferenceService.getCache().getIvyEngine().getModifiedGlobalVariables();
+        modifiedGlobalVariables.entrySet().stream()
+            .filter(entry -> globalVariables.containsKey(entry.getKey()))
+            .forEach(
+                entry -> {
+                  indicator.setFraction(1.0 - indicator.getFraction() / 2);
+                  ivyDevtoolService.updateGlobalVariable(entry.getKey(), entry.getValue());
+                });
       }
     };
   }
 
   @NotNull
-  private Task.Backgroundable newUpdateSystemPropertiesTask() {
-    return new Task.Backgroundable(project, "Update System Properties") {
+  private Task.Backgroundable newUpdateServerPropertiesTask() {
+    return new Task.Backgroundable(
+        project,
+        IvyBundle.message("toolWindow.actions.startEngine.progress.updateServerProperties")) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        Map<String, String> systemProperties = ivyDevtoolService.getSystemProperties();
-        preferenceService.getCache().getIvyEngine().setSystemProperties(systemProperties);
+        Map<String, String> serverProperties = ivyDevtoolService.getServerProperties();
+        Map<String, String> modifiedServerProperties =
+            preferenceService.getCache().getIvyEngine().getModifiedServerProperties();
+        modifiedServerProperties.entrySet().stream()
+            .filter(entry -> serverProperties.containsKey(entry.getKey()))
+            .forEach(
+                entry -> ivyDevtoolService.updateServerProperty(entry.getKey(), entry.getValue()));
+        preferenceService.update(
+            cache -> cache.getIvyEngine().setServerProperties(serverProperties));
       }
     };
   }

@@ -17,14 +17,14 @@ import saigonwithlove.ivy.intellij.settings.PreferenceService;
 import saigonwithlove.ivy.intellij.shared.Configuration;
 import saigonwithlove.ivy.intellij.shared.IvyBundle;
 
-public class EditGlobalVariableListener extends MouseAdapter {
+public class EditServerPropertyListener extends MouseAdapter {
   private Project project;
   private Tree tree;
   private PreferenceService preferenceService;
   private IvyDevtoolService ivyDevtoolService;
   private IvyEngineService ivyEngineService;
 
-  public EditGlobalVariableListener(@NotNull Project project, @NotNull Tree tree) {
+  public EditServerPropertyListener(@NotNull Project project, @NotNull Tree tree) {
     this.project = project;
     this.tree = tree;
     this.preferenceService = ServiceManager.getService(project, PreferenceService.class);
@@ -36,11 +36,11 @@ public class EditGlobalVariableListener extends MouseAdapter {
   public void mouseClicked(MouseEvent event) {
     if (event.getButton() == MouseEvent.BUTTON1 && event.getClickCount() == 2) {
       Object object = tree.getLastSelectedPathComponent();
-      if (!(object instanceof GlobalVariableNode)) {
+      if (!(object instanceof ServerPropertyNode)) {
         return;
       }
 
-      GlobalVariableNode node = (GlobalVariableNode) object;
+      ServerPropertyNode node = (ServerPropertyNode) object;
       Configuration configuration = node.getUserObject();
       String newValue =
           Messages.showInputDialog(
@@ -52,10 +52,13 @@ public class EditGlobalVariableListener extends MouseAdapter {
               null,
               new TextRange(0, StringUtils.length(configuration.getValue())));
       if (Objects.nonNull(newValue)) {
-        preferenceService.update(cache -> cache.getIvyEngine()
-            .putModifiedGlobalVariable(configuration.getName(), newValue));
+        preferenceService.update(
+            cache ->
+                cache
+                    .getIvyEngine()
+                    .putModifiedServerProperties(configuration.getName(), newValue));
         if (ivyEngineService.getRuntime().getStatus() == IvyEngineRuntime.Status.RUNNING) {
-          ivyDevtoolService.updateGlobalVariable(configuration.getName(), newValue);
+          ivyDevtoolService.updateServerProperty(configuration.getName(), newValue);
         }
       }
     }

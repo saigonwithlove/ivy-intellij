@@ -82,8 +82,7 @@ public class IvySettingsView implements SearchableConfigurable, Configurable.NoS
 
   @Override
   public void apply() throws ConfigurationException {
-    PreferenceService.Cache cache = preferenceService.getCache();
-    cache.setIvyEngineDirectory(engineDirectoryField.getText());
+    preferenceService.update(cache -> cache.setIvyEngineDirectory(engineDirectoryField.getText()));
   }
 
   @Override

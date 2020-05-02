@@ -9,7 +9,7 @@ import saigonwithlove.ivy.intellij.shared.Configuration;
 
 @Getter
 @AllArgsConstructor
-public class SystemPropertyNode extends DefaultMutableTreeNode implements EngineViewNode<Configuration> {
+public class ServerPropertyNode extends DefaultMutableTreeNode implements EngineViewNode<Configuration> {
   private Configuration userObject;
 
   @Override

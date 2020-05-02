@@ -21,13 +21,17 @@ public class EngineViewCellRenderer extends ColoredTreeCellRenderer {
       setIcon(node.getIcon());
       append(node.getUserObject().getName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
       append(StringUtils.SPACE);
-      append(node.getUserObject().getValue(), SimpleTextAttributes.GRAY_ATTRIBUTES);
-    } else if (value instanceof SystemPropertyNode) {
-      SystemPropertyNode node = (SystemPropertyNode) value;
+      append(
+          node.getUserObject().getValue(),
+          node.getUserObject().isModified()
+              ? SimpleTextAttributes.GRAYED_BOLD_ATTRIBUTES
+              : SimpleTextAttributes.GRAYED_ATTRIBUTES);
+    } else if (value instanceof ServerPropertyNode) {
+      ServerPropertyNode node = (ServerPropertyNode) value;
       setIcon(node.getIcon());
       append(node.getUserObject().getName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
       append(StringUtils.SPACE);
-      append(node.getUserObject().getValue(), SimpleTextAttributes.GRAY_ATTRIBUTES);
+      append(node.getUserObject().getValue(), SimpleTextAttributes.GRAYED_ATTRIBUTES);
     } else if (value instanceof EngineViewNode) {
       EngineViewNode<?> node = (EngineViewNode<?>) value;
       setIcon(node.getIcon());

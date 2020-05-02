@@ -14,11 +14,12 @@ import com.intellij.ui.components.JBScrollPane;
 import java.awt.BorderLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
-import java.util.List;
+import java.util.Observer;
 import javax.swing.JComponent;
 import org.jetbrains.annotations.NotNull;
 import saigonwithlove.ivy.intellij.action.DeployModuleAction;
 import saigonwithlove.ivy.intellij.settings.PreferenceService;
+import saigonwithlove.ivy.intellij.settings.CacheObserver;
 import saigonwithlove.ivy.intellij.shared.IvyModule;
 
 public class ModuleView extends JBPanel<ModuleView> {
@@ -38,9 +39,7 @@ public class ModuleView extends JBPanel<ModuleView> {
         ServiceManager.getService(project, PreferenceService.class);
     PreferenceService.Cache cache = preferenceService.getCache();
     CollectionListModel<IvyModule> model = new CollectionListModel<>(cache.getIvyModules());
-    cache
-        .getIvyModulesObservable()
-        .addObserver((observable, object) -> model.add((List<IvyModule>) object));
+    preferenceService.addObserver(updateModel(model));
     modules.setModel(model);
     modules.setCellRenderer(new ModuleCellRenderer(project));
 
@@ -53,6 +52,11 @@ public class ModuleView extends JBPanel<ModuleView> {
     JBScrollPane scrollPanel = new JBScrollPane(panel);
     scrollPanel.setBorder(new SideBorder(JBColor.border(), SideBorder.LEFT));
     return scrollPanel;
+  }
+
+  private Observer updateModel(CollectionListModel<IvyModule> model) {
+    return new CacheObserver<>(
+        "Update Ivy Modules in Module View", PreferenceService.Cache::getIvyModules, model::add);
   }
 
   @NotNull

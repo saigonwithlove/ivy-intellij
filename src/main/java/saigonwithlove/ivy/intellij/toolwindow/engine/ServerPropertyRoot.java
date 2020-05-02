@@ -8,7 +8,7 @@ import lombok.Getter;
 
 @Getter
 @AllArgsConstructor
-public class SystemPropertyRoot extends DefaultMutableTreeNode implements EngineViewNode<String> {
+public class ServerPropertyRoot extends DefaultMutableTreeNode implements EngineViewNode<String> {
   private String userObject;
 
   @Override

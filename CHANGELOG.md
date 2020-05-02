@@ -6,10 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
-- Added System Properties in Engine View
+- Added Server Properties in Engine View.
 
 ### Changed
 - Support IntelliJ 2020.1, since v0.1.12 the IntelliJ version part is removed. Ivy Plugin supports IntelliJ 2019.3 and later.
+- Use one observable to handle setting changes.
+- Internal code clean up.
 
 ## [v0.1.11-2019.3] - 2020-04-09
 ### Changed

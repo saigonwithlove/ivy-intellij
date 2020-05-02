@@ -5,21 +5,23 @@ import com.intellij.openapi.components.State;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
+import java.util.Observable;
+import java.util.Observer;
+import java.util.function.Consumer;
 import lombok.Builder;
 import lombok.Data;
 import lombok.Getter;
-import org.apache.commons.lang.StringUtils;
+import lombok.Setter;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import saigonwithlove.ivy.intellij.engine.IvyEngineDefinition;
-import saigonwithlove.ivy.intellij.shared.IvyModule;
 import saigonwithlove.ivy.intellij.shared.GeneralObservable;
+import saigonwithlove.ivy.intellij.shared.IvyModule;
 
 @State(name = "ivy")
 public class PreferenceService implements PersistentStateComponent<PreferenceService.State> {
   private State state;
   private Cache cache;
+  private GeneralObservable observable;
 
   @NotNull
   public State getState() {
@@ -42,13 +44,32 @@ public class PreferenceService implements PersistentStateComponent<PreferenceSer
     return cache;
   }
 
+  @NotNull
+  private Observable getObservable() {
+    if (observable == null) {
+      observable = new GeneralObservable();
+    }
+    return observable;
+  }
+
+  public void addObserver(@NotNull Observer observer) {
+    getObservable().addObserver(observer);
+  }
+
+  public void update(Consumer<Cache> updater) {
+    updater.accept(getCache());
+    observable.notifyObservers(getCache());
+  }
+
   @Data
   public static class State {
     private String ivyEngineDirectory;
     private Map<String, String> modifiedGlobalVariables;
+    private Map<String, String> modifiedServerProperties;
   }
 
   @Getter
+  @Setter
   @Builder
   public static class Cache {
     private String ivyEngineDirectory;
@@ -57,31 +78,5 @@ public class PreferenceService implements PersistentStateComponent<PreferenceSer
     private IvyEngineDefinition ivyEngineDefinition;
     @Builder.Default private List<IvyModule> ivyModules = new ArrayList<>();
     @Builder.Default private IvyEngineState ivyEngine = IvyEngineState.builder().build();
-
-    @Builder.Default private GeneralObservable enabledObservable = new GeneralObservable();
-    @Builder.Default private GeneralObservable ivyEngineDefinitionObservable = new GeneralObservable();
-    @Builder.Default private GeneralObservable ivyModulesObservable = new GeneralObservable();
-    @Builder.Default private GeneralObservable ivyEngineDirectoryObservable = new GeneralObservable();
-
-    public void setEnabled(boolean enabled) {
-      this.enabled = enabled;
-      this.enabledObservable.notifyObservers(enabled);
-    }
-
-    public void setIvyEngineDefinition(@NotNull IvyEngineDefinition ivyEngineDefinition) {
-      this.ivyEngineDefinition = ivyEngineDefinition;
-      this.ivyEngineDefinitionObservable.notifyObservers(ivyEngineDefinition);
-    }
-
-    public void setIvyModules(@NotNull List<IvyModule> ivyModules) {
-      this.ivyModules = ivyModules;
-      this.ivyModulesObservable.notifyObservers(ivyModules);
-    }
-
-    public void setIvyEngineDirectory(@Nullable String ivyEngineDirectory) {
-      this.ivyEngineDirectory = Optional.ofNullable(ivyEngineDirectory).orElse(StringUtils.EMPTY);
-      this.ivyEngineDirectoryObservable.notifyObservers(ivyEngineDirectory);
-    }
   }
-
 }

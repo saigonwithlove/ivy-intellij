@@ -228,6 +228,26 @@ public class IvyDevtoolService {
     }
   }
 
+  public void updateServerProperty(@NotNull String name, @NotNull String value) {
+    try {
+      String baseIvyEngineUrl =
+          getIvyEngineUrl()
+              .orElseThrow(() -> new NoSuchElementException("Could not get baseIvyEngineUrl."));
+      URI setServerPropertyUri =
+          new URIBuilder(baseIvyEngineUrl + IVY_DEVTOOL_URL)
+              .addParameter("command", "server-property$set")
+              .addParameter("name", name)
+              .addParameter("value", value)
+              .build();
+
+      Request.Get(setServerPropertyUri).execute().returnContent();
+    } catch (URISyntaxException ex) {
+      throw new IllegalArgumentException(ex);
+    } catch (IOException ex) {
+      throw new RuntimeException(ex);
+    }
+  }
+
   public boolean isDeployed(@NotNull IvyModule ivyModule) {
     Optional<VirtualFile> processModelVersionDirectoryOpt =
         Optional.ofNullable(
@@ -247,14 +267,14 @@ public class IvyDevtoolService {
   }
 
   @NotNull
-  public Map<String, String> getSystemProperties() {
+  public Map<String, String> getServerProperties() {
     try {
       String baseIvyEngineUrl =
           getIvyEngineUrl()
               .orElseThrow(() -> new NoSuchElementException("Could not get baseIvyEngineUrl."));
       URI setGlobalVariableUri =
           new URIBuilder(baseIvyEngineUrl + IVY_DEVTOOL_URL)
-              .addParameter("command", "system-property$get-all")
+              .addParameter("command", "server-property$get-all")
               .build();
 
       return (Map<String, String>)
