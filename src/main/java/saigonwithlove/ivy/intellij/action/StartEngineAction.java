@@ -52,7 +52,7 @@ public class StartEngineAction extends AnAction {
       return;
     }
 
-    if (ivyDevtoolService.notExists()) {
+    if (ivyDevtoolService.notExists() || ivyDevtoolService.isOutdated()) {
       Boolean ivyDevtoolInstalled = ProgressManager.getInstance().run(newInstallIvyDevtoolTask());
       preferenceService.getCache().getIvyDevtool().setEnabled(ivyDevtoolInstalled);
     }

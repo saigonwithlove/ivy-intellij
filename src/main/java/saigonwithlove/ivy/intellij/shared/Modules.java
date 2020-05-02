@@ -48,17 +48,7 @@ public class Modules {
 
   @NotNull
   public static Optional<Model> toMavenModel(@NotNull Module module) {
-    Optional<VirtualFile> pomOpt = getPomFile(module);
-    if (pomOpt.isPresent()) {
-      try {
-        return Optional.of(
-            new MavenXpp3Reader().read(new InputStreamReader(pomOpt.get().getInputStream())));
-      } catch (IOException | XmlPullParserException ex) {
-        LOG.error("Could not read pom.xml.", ex);
-        return Optional.empty();
-      }
-    }
-    return Optional.empty();
+    return getPomFile(module).flatMap(Modules::toMavenModel);
   }
 
   private static Comparator<Module> createModuleComparator() {
@@ -115,5 +105,14 @@ public class Modules {
 
   public static Optional<IvyModule> toIvyModule(@NotNull Module module) {
     return Optional.of(module).filter(Modules::isIvyModule).map(IvyModule::new);
+  }
+
+  public static Optional<Model> toMavenModel(@NotNull VirtualFile pom) {
+    try {
+      return Optional.of(new MavenXpp3Reader().read(new InputStreamReader(pom.getInputStream())));
+    } catch (IOException | XmlPullParserException ex) {
+      LOG.error("Could not read pom.xml.", ex);
+      return Optional.empty();
+    }
   }
 }

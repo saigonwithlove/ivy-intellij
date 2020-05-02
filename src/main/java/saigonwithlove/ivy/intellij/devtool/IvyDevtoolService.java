@@ -31,6 +31,9 @@ import java.util.zip.ZipInputStream;
 import org.apache.commons.io.FileUtils;
 import org.apache.http.client.fluent.Request;
 import org.apache.http.client.utils.URIBuilder;
+import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
+import org.apache.maven.artifact.versioning.InvalidVersionSpecificationException;
+import org.apache.maven.artifact.versioning.VersionRange;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import saigonwithlove.ivy.intellij.engine.IvyEngineService;
@@ -38,6 +41,7 @@ import saigonwithlove.ivy.intellij.mirror.FileSyncProcessor;
 import saigonwithlove.ivy.intellij.settings.PreferenceService;
 import saigonwithlove.ivy.intellij.shared.IvyBundle;
 import saigonwithlove.ivy.intellij.shared.IvyModule;
+import saigonwithlove.ivy.intellij.shared.Modules;
 
 public class IvyDevtoolService {
   private static final Logger LOG =
@@ -46,6 +50,7 @@ public class IvyDevtoolService {
       "https://github.com/saigonwithlove/ivy-devtool/releases/download/ivy7/ivy-devtool.iar";
   private static final String IVY_DEVTOOL_URL =
       "/ivy/pro/Portal/ivy-devtool/16AE38ED14569A2A/engine.ivp";
+  private static final String IVY_DEVTOOL_VERSION_RANGE = "[0.2.3,)";
 
   private Project project;
   private PreferenceService preferenceService;
@@ -67,6 +72,31 @@ public class IvyDevtoolService {
 
   public boolean notExists() {
     return !exists();
+  }
+
+  public boolean isUpdated() {
+    Optional<VirtualFile> pomOpt =
+        Optional.ofNullable(
+            LocalFileSystem.getInstance().findFileByPath(getIvyDevtoolDirectory() + "/pom.xml"));
+    pomOpt.ifPresent(pom -> pom.refresh(false, false));
+    return pomOpt
+        .flatMap(Modules::toMavenModel)
+        .map(model -> new DefaultArtifactVersion(model.getVersion()))
+        .map(
+            version -> {
+              try {
+                return VersionRange.createFromVersionSpec(IVY_DEVTOOL_VERSION_RANGE)
+                    .containsVersion(version);
+              } catch (InvalidVersionSpecificationException ex) {
+                LOG.error("Could not evaluate version of Ivy Devtool: " + version, ex);
+                return false;
+              }
+            })
+        .orElse(Boolean.FALSE);
+  }
+
+  public boolean isOutdated() {
+    return !isUpdated();
   }
 
   public void install(ProgressIndicator indicator) {
