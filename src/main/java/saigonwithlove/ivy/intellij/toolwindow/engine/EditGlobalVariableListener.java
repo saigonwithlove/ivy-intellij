@@ -52,8 +52,9 @@ public class EditGlobalVariableListener extends MouseAdapter {
               null,
               new TextRange(0, StringUtils.length(configuration.getValue())));
       if (Objects.nonNull(newValue)) {
-        preferenceService.update(cache -> cache.getIvyEngine()
-            .putModifiedGlobalVariable(configuration.getName(), newValue));
+        preferenceService.update(
+            cache ->
+                cache.getIvyEngine().putModifiedGlobalVariable(configuration.getName(), newValue));
         if (ivyEngineService.getRuntime().getStatus() == IvyEngineRuntime.Status.RUNNING) {
           ivyDevtoolService.updateGlobalVariable(configuration.getName(), newValue);
         }

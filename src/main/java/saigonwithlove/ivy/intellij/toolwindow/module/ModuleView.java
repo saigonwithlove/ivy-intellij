@@ -18,8 +18,8 @@ import java.util.Observer;
 import javax.swing.JComponent;
 import org.jetbrains.annotations.NotNull;
 import saigonwithlove.ivy.intellij.action.DeployModuleAction;
-import saigonwithlove.ivy.intellij.settings.PreferenceService;
 import saigonwithlove.ivy.intellij.settings.CacheObserver;
+import saigonwithlove.ivy.intellij.settings.PreferenceService;
 import saigonwithlove.ivy.intellij.shared.IvyModule;
 
 public class ModuleView extends JBPanel<ModuleView> {
