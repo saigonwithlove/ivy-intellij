@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Observer;
 import java.util.stream.Collectors;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.maven.artifact.versioning.ArtifactVersion;
 import org.jetbrains.annotations.NotNull;
 import saigonwithlove.ivy.intellij.action.OpenSettingsAction;
@@ -93,8 +94,6 @@ public class InitializationActivity implements StartupActivity {
 
   @NotNull
   Observer updateIvyEngineDefinition(@NotNull Project project) {
-    CacheObserver.Converter<String> converter =
-        o -> ((PreferenceService.Cache) o).getIvyEngineDirectory();
     CacheObserver.Updater<String> updater =
         ivyEngineDirectory -> {
           IvyEngineService ivyEngineService =
@@ -106,6 +105,7 @@ public class InitializationActivity implements StartupActivity {
                 project,
                 new OpenSettingsAction(project),
                 IvyBundle.message("notification.ivyEngineDirectoryInvalid"));
+            preferenceService.update(cache -> cache.setIvyEngineDefinition(null));
             return;
           }
           ArtifactVersion ivyEngineVersion = IvyEngineVersions.parseVersion(ivyEngineDirectory);
@@ -113,7 +113,8 @@ public class InitializationActivity implements StartupActivity {
               cache ->
                   cache.setIvyEngineDefinition(IvyEngineDefinition.fromVersion(ivyEngineVersion)));
         };
-    return new CacheObserver<>("Update Ivy Engine Definition", converter, updater);
+    return new CacheObserver<>(
+        "Update Ivy Engine Definition", PreferenceService.Cache::getIvyEngineDirectory, updater);
   }
 
   @NotNull
@@ -138,8 +139,14 @@ public class InitializationActivity implements StartupActivity {
 
   @NotNull
   private Observer updateIvyEngineLibraries(@NotNull Project project) {
-    CacheObserver.Updater<IvyEngineDefinition> updater =
-        ivyEngineDefinition -> {
+    CacheObserver.Converter<Pair<String, IvyEngineDefinition>> converter =
+        cache -> Pair.of(cache.getIvyEngineDirectory(), cache.getIvyEngineDefinition());
+    CacheObserver.Updater<Pair<String, IvyEngineDefinition>> updater =
+        pair -> {
+          if (pair.getRight() == null) {
+            // Could not update libraries without Ivy Engine Definition
+            return;
+          }
           IvyEngineService ivyEngineService =
               ServiceManager.getService(project, IvyEngineService.class);
 
@@ -172,8 +179,7 @@ public class InitializationActivity implements StartupActivity {
             }
           }
         };
-    return new CacheObserver<>(
-        "Update Ivy Engine Libraries", PreferenceService.Cache::getIvyEngineDefinition, updater);
+    return new CacheObserver<>("Update Ivy Engine Libraries", converter, updater);
   }
 
   @NotNull
