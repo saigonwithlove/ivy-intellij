@@ -28,6 +28,20 @@ patchPluginXml {
   sinceBuild '193'
   untilBuild '201.*'
   changeNotes """
+      <h3>v0.1.12 - 2020-05-03</h3>
+      <h4>Added</h4>
+      <ul>
+        <li>Added Server Properties in Engine View.</li>
+        <li>Download and update Ivy Devtool automatically.</li>
+        <li>Show different color between default and modified configuration.</li>
+      </ul>
+      <h4>Changed</h4>
+      <ul>
+        <li>Support IntelliJ 2020.1, since v0.1.12 the IntelliJ version part is removed. Ivy Plugin supports IntelliJ 2019.3 and later.</li>
+        <li>Use one observable to handle setting changes.</li>
+        <li>Internal code clean up.</li>
+      </ul>
+
       <h3>v0.1.11-2019.3 - 2020-04-09</h3>
       <h4>Changed</h4>
       <ul>
