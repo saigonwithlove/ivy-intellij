@@ -2,6 +2,7 @@ package saigonwithlove.ivy.intellij.settings;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.ui.MessageDialogBuilder;
@@ -27,6 +28,9 @@ import saigonwithlove.ivy.intellij.shared.Notifier;
 import saigonwithlove.ivy.intellij.shared.Projects;
 
 public class InitializationActivity implements StartupActivity {
+  private static final Logger LOG =
+      Logger.getInstance("#" + InitializationActivity.class.getCanonicalName());
+
   @Override
   public void runActivity(@NotNull Project project) {
     PreferenceService preferenceService =
@@ -54,10 +58,20 @@ public class InitializationActivity implements StartupActivity {
             .collect(Collectors.toMap(Configuration::getName, Configuration::getValue));
     preferenceService.update(
         cache -> cache.getIvyEngine().setGlobalVariables(defaultGlobalVariables));
-    // Restore modified global variable from state
+    // Restore modified global variables from state
     preferenceService.update(
-        cache ->
-            cache.getIvyEngine().setModifiedGlobalVariables(state.getModifiedGlobalVariables()));
+        cache -> {
+          if (state.getModifiedGlobalVariables() != null) {
+            cache.getIvyEngine().setModifiedGlobalVariables(state.getModifiedGlobalVariables());
+          }
+        });
+    // Restore modified server properties from state
+    preferenceService.update(
+        cache -> {
+          if (state.getModifiedServerProperties() != null) {
+            cache.getIvyEngine().setModifiedServerProperties(state.getModifiedServerProperties());
+          }
+        });
     // Add modified global variable observer
     preferenceService.addObserver(updateModifiedGlobalVariablesState(state));
     // Add modified server property observer
@@ -109,6 +123,7 @@ public class InitializationActivity implements StartupActivity {
             return;
           }
           ArtifactVersion ivyEngineVersion = IvyEngineVersions.parseVersion(ivyEngineDirectory);
+          LOG.info("Detected Axon.ivy version: " + ivyEngineVersion);
           preferenceService.update(
               cache ->
                   cache.setIvyEngineDefinition(IvyEngineDefinition.fromVersion(ivyEngineVersion)));
