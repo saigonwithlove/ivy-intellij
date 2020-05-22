@@ -194,7 +194,8 @@ public class IvyDevtoolService {
     Path target =
         Paths.get(
             preferenceService.getCache().getIvyEngineDirectory()
-                + "/system/applications/Portal/"
+                + preferenceService.getCache().getIvyEngineDefinition().getApplicationDirectory()
+                + "/Portal/"
                 + ivyModule.getName()
                 + "/1");
     FileSyncProcessor.Options options = new FileSyncProcessor.Options();

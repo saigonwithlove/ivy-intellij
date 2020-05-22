@@ -50,7 +50,7 @@ public enum IvyEngineDefinition {
       new DefaultArtifactVersion("8.0.0"),
       Arrays.asList(Ivy8Library.values()),
       "/system/configuration/org.eclipse.osgi",
-      "/system/applications",
+      "/work/demo-applications",
       JavaSdkVersion.JDK_11) {
     @NotNull
     @Override

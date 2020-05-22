@@ -129,7 +129,7 @@ public class IvyEngineRuntime {
 
   @AllArgsConstructor
   public static class IvyEngineProcessListener implements ProcessListener {
-    private static final Pattern PORT_PATTERN = Pattern.compile(".*http://.*:([0-9]{4})/ivy.*");
+    private static final Pattern PORT_PATTERN = Pattern.compile(".*http://.*:([0-9]{4})/.*");
     private static final String READY_TEXT = "Axon.ivy Engine is running and ready to serve";
 
     @NonNull private IvyEngineRuntime runtime;
@@ -158,6 +158,7 @@ public class IvyEngineRuntime {
       }
 
       if (this.runtime.status == Status.STARTING && event.getText().startsWith(READY_TEXT)) {
+        LOG.info("Axon.ivy Engine started.");
         this.runtime.setStatus(Status.RUNNING);
       }
     }
