@@ -127,7 +127,7 @@ public class StartEngineAction extends AnAction {
                 .filter(ivyDevtoolService::isNotDeployed)
                 .collect(Collectors.toList());
         for (int i = 0; i < ivyModules.size(); i++) {
-          ivyDevtoolService.deployModule(ivyModules.get(i));
+          ivyDevtoolService.deployModuleOffline(ivyModules.get(i));
           indicator.setFraction(((double) i) / (ivyModules.size()));
         }
         return null;

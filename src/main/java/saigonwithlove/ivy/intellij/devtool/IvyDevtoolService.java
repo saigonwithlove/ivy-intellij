@@ -28,14 +28,18 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
+import java.util.zip.ZipOutputStream;
 import org.apache.commons.io.FileUtils;
 import org.apache.http.client.fluent.Request;
 import org.apache.http.client.utils.URIBuilder;
+import org.apache.maven.artifact.versioning.ArtifactVersion;
 import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
 import org.apache.maven.artifact.versioning.InvalidVersionSpecificationException;
 import org.apache.maven.artifact.versioning.VersionRange;
+import org.codehaus.plexus.util.DirectoryScanner;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import saigonwithlove.ivy.intellij.engine.IvyEngineDefinition;
 import saigonwithlove.ivy.intellij.engine.IvyEngineService;
 import saigonwithlove.ivy.intellij.mirror.FileSyncProcessor;
 import saigonwithlove.ivy.intellij.settings.PreferenceService;
@@ -231,6 +235,51 @@ public class IvyDevtoolService {
 
   public void deployModule(@NotNull IvyModule ivyModule) {
     this.deployModule(ivyModule, null);
+  }
+
+  public void deployModuleOffline(@NotNull IvyModule ivyModule) {
+    ArtifactVersion currentIvyVersion =
+        preferenceService.getCache().getIvyEngineDefinition().getVersion();
+    if (currentIvyVersion.getMajorVersion()
+        < IvyEngineDefinition.IVY8.getVersion().getMajorVersion()) {
+      this.deployModule(ivyModule, null);
+    } else {
+      String ivyEngineDirectory = preferenceService.getCache().getIvyEngineDirectory();
+      File deployedIvyModuleFile =
+          new File(
+              ivyEngineDirectory
+                  + "/system/demo-applications/Portal/"
+                  + ivyModule.getName()
+                  + ".zip");
+      deployedIvyModuleFile.getParentFile().mkdirs();
+      try (ZipOutputStream zipOutputStream =
+          new ZipOutputStream(new FileOutputStream(deployedIvyModuleFile))) {
+
+        String ivyModulePath =
+            Preconditions.checkNotNull(ivyModule.getContentRoot().getCanonicalPath());
+        DirectoryScanner scanner = new DirectoryScanner();
+        scanner.setBasedir(ivyModulePath);
+        scanner.setIncludes(new String[] {"**"});
+        scanner.setExcludes(new String[] {".git", "target"});
+        scanner.scan();
+
+        for (String directory : scanner.getIncludedDirectories()) {
+          LOG.info("Create directory entry: " + directory);
+          zipOutputStream.putNextEntry(new ZipEntry(directory + "/"));
+          zipOutputStream.closeEntry();
+        }
+
+        for (String file : scanner.getIncludedFiles()) {
+          LOG.info("Create file entry: " + file);
+          zipOutputStream.putNextEntry(new ZipEntry(file));
+          byte[] bytes = Files.readAllBytes(Paths.get(ivyModulePath + "/" + file));
+          zipOutputStream.write(bytes, 0, bytes.length);
+          zipOutputStream.closeEntry();
+        }
+      } catch (IOException ex) {
+        LOG.error("Could not deploy module {0}.", ex, ivyModule.getName());
+      }
+    }
   }
 
   @NotNull
