@@ -11,8 +11,7 @@ import java.util.Objects;
 import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import saigonwithlove.ivy.intellij.devtool.IvyDevtoolService;
-import saigonwithlove.ivy.intellij.engine.IvyEngineRuntime;
-import saigonwithlove.ivy.intellij.engine.IvyEngineService;
+import saigonwithlove.ivy.intellij.engine.IvyEngine;
 import saigonwithlove.ivy.intellij.settings.PreferenceService;
 import saigonwithlove.ivy.intellij.shared.Configuration;
 import saigonwithlove.ivy.intellij.shared.IvyBundle;
@@ -22,14 +21,12 @@ public class EditGlobalVariableListener extends MouseAdapter {
   private Tree tree;
   private PreferenceService preferenceService;
   private IvyDevtoolService ivyDevtoolService;
-  private IvyEngineService ivyEngineService;
 
   public EditGlobalVariableListener(@NotNull Project project, @NotNull Tree tree) {
     this.project = project;
     this.tree = tree;
     this.preferenceService = ServiceManager.getService(project, PreferenceService.class);
     this.ivyDevtoolService = ServiceManager.getService(project, IvyDevtoolService.class);
-    this.ivyEngineService = ServiceManager.getService(project, IvyEngineService.class);
   }
 
   @Override
@@ -53,9 +50,15 @@ public class EditGlobalVariableListener extends MouseAdapter {
               new TextRange(0, StringUtils.length(configuration.getValue())));
       if (Objects.nonNull(newValue)) {
         preferenceService.update(
-            cache ->
-                cache.getIvyEngine().putModifiedGlobalVariable(configuration.getName(), newValue));
-        if (ivyEngineService.getRuntime().getStatus() == IvyEngineRuntime.Status.RUNNING) {
+            state ->
+            {
+              configuration.setValue(newValue);
+              state.getGlobalVariables().put(configuration.getName(), configuration);
+              return state;
+            });
+        IvyEngine engine = preferenceService.getState().getIvyEngine();
+        if (engine != null &&
+                engine.getStatus() == IvyEngine.Status.RUNNING) {
           ivyDevtoolService.updateGlobalVariable(configuration.getName(), newValue);
         }
       }

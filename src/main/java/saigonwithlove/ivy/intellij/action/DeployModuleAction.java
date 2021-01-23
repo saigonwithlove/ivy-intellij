@@ -38,7 +38,7 @@ public class DeployModuleAction extends AnAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent event) {
     // Show notification if ivy devtool is disabled
-    if (!preferenceService.getCache().getIvyDevtool().isEnabled()) {
+    if (!preferenceService.getState().isDevtoolEnabled()) {
       Notifier.info(
           project,
           new OpenUrlAction(
