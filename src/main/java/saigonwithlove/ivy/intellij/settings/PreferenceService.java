@@ -2,28 +2,41 @@ package saigonwithlove.ivy.intellij.settings;
 
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.xmlb.annotations.Transient;
+import io.reactivex.rxjava3.core.Observable;
+import io.reactivex.rxjava3.subjects.BehaviorSubject;
+import io.reactivex.rxjava3.subjects.Subject;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Observable;
-import java.util.Observer;
-import java.util.function.Consumer;
-import lombok.Builder;
-import lombok.Data;
+import java.util.function.Function;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.jetbrains.annotations.NotNull;
-import saigonwithlove.ivy.intellij.engine.IvyEngineDefinition;
-import saigonwithlove.ivy.intellij.shared.GeneralObservable;
+import org.jetbrains.annotations.Nullable;
+import saigonwithlove.ivy.intellij.engine.IvyEngine;
+import saigonwithlove.ivy.intellij.shared.Configuration;
 import saigonwithlove.ivy.intellij.shared.IvyModule;
 
-@State(name = "ivy")
+@State(name = "ivy", storages = @Storage("ivy.xml"))
 public class PreferenceService implements PersistentStateComponent<PreferenceService.State> {
+  private static final Logger LOG =
+      Logger.getInstance("#" + PreferenceService.class.getCanonicalName());
+
   private State state;
-  private Cache cache;
-  private GeneralObservable observable;
+  private final Subject<State> stateSubject;
+
+  public PreferenceService() {
+    this.state = new State();
+    this.stateSubject = BehaviorSubject.createDefault(state);
+  }
 
   @NotNull
+  @Override
   public State getState() {
     if (state == null) {
       state = new State();
@@ -33,50 +46,38 @@ public class PreferenceService implements PersistentStateComponent<PreferenceSer
 
   @Override
   public void loadState(@NotNull State state) {
-    this.state = state;
+    this.update((currentState) -> state);
   }
 
-  @NotNull
-  public Cache getCache() {
-    if (cache == null) {
-      cache = Cache.builder().build();
-    }
-    return cache;
+  public Observable<State> asObservable() {
+    return this.stateSubject;
   }
 
-  @NotNull
-  private Observable getObservable() {
-    if (observable == null) {
-      observable = new GeneralObservable();
-    }
-    return observable;
+  public void update(Function<State, State> stateUpdater) {
+    this.state = stateUpdater.apply(this.state);
+    this.stateSubject.onNext(this.state);
   }
 
-  public void addObserver(@NotNull Observer observer) {
-    getObservable().addObserver(observer);
-  }
-
-  public void update(Consumer<Cache> updater) {
-    updater.accept(getCache());
-    observable.notifyObservers(getCache());
-  }
-
-  @Data
-  public static class State {
-    private String ivyEngineDirectory;
-    private Map<String, String> modifiedGlobalVariables;
-    private Map<String, String> modifiedServerProperties;
-  }
-
-  @Getter
   @Setter
-  @Builder
-  public static class Cache {
+  @Getter
+  @NoArgsConstructor
+  public static class State {
+    private boolean pluginEnabled;
     private String ivyEngineDirectory;
-    private boolean enabled;
-    @Builder.Default private IvyDevtoolState ivyDevtool = IvyDevtoolState.builder().build();
-    private IvyEngineDefinition ivyEngineDefinition;
-    @Builder.Default private List<IvyModule> ivyModules = new ArrayList<>();
-    @Builder.Default private IvyEngineState ivyEngine = IvyEngineState.builder().build();
+    private Map<String, Configuration> globalVariables = new HashMap<>();
+    private Map<String, Configuration> serverProperties = new HashMap<>();
+    private Map<String, List<String>> ivyLibraries = new HashMap<>();
+
+    /*
+     * The devtool status must be handled inside Ivy Engine.
+     */
+    @Deprecated private boolean devtoolEnabled;
+
+    @Nullable
+    @Getter(onMethod = @__({@Transient}))
+    private IvyEngine ivyEngine;
+
+    @Getter(onMethod = @__({@Transient}))
+    private List<IvyModule> ivyModules = new ArrayList<>();
   }
 }

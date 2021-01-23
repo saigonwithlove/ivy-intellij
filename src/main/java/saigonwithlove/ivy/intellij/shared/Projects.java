@@ -2,6 +2,7 @@ package saigonwithlove.ivy.intellij.shared;
 
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
+import java.text.Collator;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -16,7 +17,7 @@ public class Projects {
     return Arrays.stream(ModuleManager.getInstance(project).getModules())
         .map(Modules::toIvyModule)
         .flatMap(moduleOpt -> moduleOpt.map(Stream::of).orElseGet(Stream::empty))
-        .sorted((a, b) -> a.getName().compareToIgnoreCase(b.getName()))
+        .sorted((a, b) -> Collator.getInstance().compare(a.getName(), b.getName()))
         .collect(Collectors.toList());
   }
 }

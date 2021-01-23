@@ -19,19 +19,14 @@ import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import saigonwithlove.ivy.intellij.engine.IvyEngineService;
 import saigonwithlove.ivy.intellij.shared.IvyBundle;
 
 public class IvySettingsView implements SearchableConfigurable, Configurable.NoScroll {
-  private Project project;
-  private PreferenceService preferenceService;
-  private IvyEngineService ivyEngineService;
-  private JBTextField engineDirectoryField;
+  private final PreferenceService preferenceService;
+  private final JBTextField engineDirectoryField;
 
   public IvySettingsView(@NotNull Project project) {
-    this.project = project;
     this.preferenceService = ServiceManager.getService(project, PreferenceService.class);
-    this.ivyEngineService = ServiceManager.getService(project, IvyEngineService.class);
     this.engineDirectoryField = new JBTextField();
   }
 
@@ -50,8 +45,8 @@ public class IvySettingsView implements SearchableConfigurable, Configurable.NoS
   @Nullable
   @Override
   public JComponent createComponent() {
-    PreferenceService.Cache cache = preferenceService.getCache();
-    engineDirectoryField.setText(cache.getIvyEngineDirectory());
+    PreferenceService.State state = preferenceService.getState();
+    engineDirectoryField.setText(state.getIvyEngineDirectory());
 
     JBPanel wrapper = new JBPanel(new GridBagLayout());
     GridBagConstraints constraints = new GridBagConstraints();
@@ -65,6 +60,7 @@ public class IvySettingsView implements SearchableConfigurable, Configurable.NoS
     JBLabel engineDirectoryLabel =
         new JBLabel(IvyBundle.message("settings.engine.engineDirectoryLabel"));
     content.add(engineDirectoryLabel, BorderLayout.WEST);
+    // TODO replace deprecated GuiUtils.constructDirectoryBrowserField
     JPanel engineDirectoryPanel =
         GuiUtils.constructDirectoryBrowserField(engineDirectoryField, "ivyEngineDirectory");
     engineDirectoryPanel.setPreferredSize(new Dimension(600, 30));
@@ -76,18 +72,22 @@ public class IvySettingsView implements SearchableConfigurable, Configurable.NoS
 
   @Override
   public boolean isModified() {
-    PreferenceService.Cache preferences = preferenceService.getCache();
-    return !StringUtils.equals(preferences.getIvyEngineDirectory(), engineDirectoryField.getText());
+    PreferenceService.State state = preferenceService.getState();
+    return !StringUtils.equals(state.getIvyEngineDirectory(), engineDirectoryField.getText());
   }
 
   @Override
   public void apply() throws ConfigurationException {
-    preferenceService.update(cache -> cache.setIvyEngineDirectory(engineDirectoryField.getText()));
+    preferenceService.update(
+        state -> {
+          state.setIvyEngineDirectory(engineDirectoryField.getText());
+          return state;
+        });
   }
 
   @Override
   public void reset() {
-    PreferenceService.Cache cache = preferenceService.getCache();
-    engineDirectoryField.setText(cache.getIvyEngineDirectory());
+    PreferenceService.State state = preferenceService.getState();
+    engineDirectoryField.setText(state.getIvyEngineDirectory());
   }
 }

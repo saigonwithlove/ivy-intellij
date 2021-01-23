@@ -11,13 +11,15 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import java.util.List;
 import java.util.Map;
-import java.util.Observer;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import org.jetbrains.annotations.NotNull;
 import saigonwithlove.ivy.intellij.devtool.IvyDevtoolService;
-import saigonwithlove.ivy.intellij.engine.IvyEngineRuntime;
-import saigonwithlove.ivy.intellij.engine.IvyEngineService;
+import saigonwithlove.ivy.intellij.engine.IvyEngine;
+import saigonwithlove.ivy.intellij.settings.CacheObserver;
 import saigonwithlove.ivy.intellij.settings.PreferenceService;
+import saigonwithlove.ivy.intellij.shared.Configuration;
 import saigonwithlove.ivy.intellij.shared.IvyBundle;
 import saigonwithlove.ivy.intellij.shared.IvyModule;
 import saigonwithlove.ivy.intellij.shared.Notifier;
@@ -28,7 +30,6 @@ public class StartEngineAction extends AnAction {
 
   private Project project;
   private PreferenceService preferenceService;
-  private IvyEngineService ivyEngineService;
   private IvyDevtoolService ivyDevtoolService;
 
   public StartEngineAction(@NotNull Project project) {
@@ -38,13 +39,13 @@ public class StartEngineAction extends AnAction {
         AllIcons.Actions.Execute);
     this.project = project;
     this.preferenceService = ServiceManager.getService(project, PreferenceService.class);
-    this.ivyEngineService = ServiceManager.getService(project, IvyEngineService.class);
     this.ivyDevtoolService = ServiceManager.getService(project, IvyDevtoolService.class);
   }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent event) {
-    if (!ivyEngineService.isValidIvyEngine()) {
+    IvyEngine engine = preferenceService.getState().getIvyEngine();
+    if (engine == null) {
       Notifier.info(
           project,
           new OpenSettingsAction(project),
@@ -54,21 +55,30 @@ public class StartEngineAction extends AnAction {
 
     if (ivyDevtoolService.notExists() || ivyDevtoolService.isOutdated()) {
       Boolean ivyDevtoolInstalled = ProgressManager.getInstance().run(newInstallIvyDevtoolTask());
-      preferenceService.getCache().getIvyDevtool().setEnabled(ivyDevtoolInstalled);
+      preferenceService.update(
+          state -> {
+            state.setDevtoolEnabled(ivyDevtoolInstalled);
+            return state;
+          });
     }
-    if (preferenceService.getCache().getIvyDevtool().isEnabled()) {
+    if (preferenceService.getState().isDevtoolEnabled()) {
       ProgressManager.getInstance().run(newDeployIvyModulesTask());
-      Observer runtimeReadyObserver =
-          (observable, object) -> {
-            IvyEngineRuntime rt = (IvyEngineRuntime) object;
-            if (rt.getStatus() == IvyEngineRuntime.Status.RUNNING) {
-              ProgressManager.getInstance().run(newUpdateGlobalVariablesTask());
-              ProgressManager.getInstance().run(newUpdateServerPropertiesTask());
-            }
-          };
-      IvyEngineRuntime runtime = ivyEngineService.getRuntime();
-      runtime.getObservable().addObserver(runtimeReadyObserver);
-      runtime.start();
+      CacheObserver<IvyEngine.Status> runtimeReadyObserver =
+          new CacheObserver<>(
+              "Update Global Variables and Server Properties.",
+              ivyEngineStatus -> {
+                if (ivyEngineStatus == IvyEngine.Status.RUNNING) {
+                  ProgressManager.getInstance().run(newUpdateGlobalVariablesTask());
+                  ProgressManager.getInstance().run(newUpdateServerPropertiesTask());
+                }
+              });
+      preferenceService
+          .asObservable()
+          .map(PreferenceService.State::getIvyEngine)
+          .filter(Objects::nonNull)
+          .map(IvyEngine::getStatus)
+          .subscribe(runtimeReadyObserver);
+      engine.start();
     }
   }
 
@@ -79,16 +89,16 @@ public class StartEngineAction extends AnAction {
         IvyBundle.message("toolWindow.actions.startEngine.progress.updateGlobalVariables")) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        Map<String, String> globalVariables =
-            preferenceService.getCache().getIvyEngine().getGlobalVariables();
-        Map<String, String> modifiedGlobalVariables =
-            preferenceService.getCache().getIvyEngine().getModifiedGlobalVariables();
-        modifiedGlobalVariables.entrySet().stream()
-            .filter(entry -> globalVariables.containsKey(entry.getKey()))
+        Map<String, Configuration> globalVariables =
+            preferenceService.getState().getGlobalVariables();
+        globalVariables.entrySet().stream()
+            .map(Map.Entry::getValue)
+            .filter(Configuration::isModified)
             .forEach(
-                entry -> {
+                globalVariable -> {
                   indicator.setFraction(1.0 - indicator.getFraction() / 2);
-                  ivyDevtoolService.updateGlobalVariable(entry.getKey(), entry.getValue());
+                  ivyDevtoolService.updateGlobalVariable(
+                      globalVariable.getName(), globalVariable.getValue());
                 });
       }
     };
@@ -101,15 +111,40 @@ public class StartEngineAction extends AnAction {
         IvyBundle.message("toolWindow.actions.startEngine.progress.updateServerProperties")) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        Map<String, String> serverProperties = ivyDevtoolService.getServerProperties();
-        Map<String, String> modifiedServerProperties =
-            preferenceService.getCache().getIvyEngine().getModifiedServerProperties();
-        modifiedServerProperties.entrySet().stream()
-            .filter(entry -> serverProperties.containsKey(entry.getKey()))
+        Map<String, Configuration> storedServerProperties =
+            preferenceService.getState().getServerProperties();
+        Map<String, Configuration> serverProperties =
+            ivyDevtoolService.getServerProperties().entrySet().stream()
+                .collect(
+                    Collectors.toMap(
+                        Map.Entry::getKey,
+                        entry -> {
+                          Configuration serverProperty =
+                              Configuration.builder()
+                                  .name(entry.getKey())
+                                  .defaultValue(entry.getValue())
+                                  .value(
+                                      Optional.ofNullable(
+                                              storedServerProperties.get(entry.getKey()))
+                                          .filter(Configuration::isModified)
+                                          .map(Configuration::getValue)
+                                          .orElse(null))
+                                  .build();
+                          return serverProperty;
+                        }));
+        serverProperties.entrySet().stream()
+            .map(Map.Entry::getValue)
+            .filter(Configuration::isModified)
             .forEach(
-                entry -> ivyDevtoolService.updateServerProperty(entry.getKey(), entry.getValue()));
+                serverProperty -> {
+                  ivyDevtoolService.updateServerProperty(
+                      serverProperty.getName(), serverProperty.getValue());
+                });
         preferenceService.update(
-            cache -> cache.getIvyEngine().setServerProperties(serverProperties));
+            state -> {
+              state.setServerProperties(serverProperties);
+              return state;
+            });
       }
     };
   }
@@ -123,7 +158,7 @@ public class StartEngineAction extends AnAction {
       @Override
       protected Void compute(@NotNull ProgressIndicator indicator) throws RuntimeException {
         List<IvyModule> ivyModules =
-            preferenceService.getCache().getIvyModules().stream()
+            preferenceService.getState().getIvyModules().stream()
                 .filter(ivyDevtoolService::isNotDeployed)
                 .collect(Collectors.toList());
         for (int i = 0; i < ivyModules.size(); i++) {

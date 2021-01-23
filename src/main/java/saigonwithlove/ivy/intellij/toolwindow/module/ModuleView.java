@@ -14,6 +14,7 @@ import com.intellij.ui.components.JBScrollPane;
 import java.awt.BorderLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import java.util.List;
 import java.util.Observer;
 import javax.swing.JComponent;
 import org.jetbrains.annotations.NotNull;
@@ -37,9 +38,12 @@ public class ModuleView extends JBPanel<ModuleView> {
     JBPanel panel = new JBPanel(new GridBagLayout());
     PreferenceService preferenceService =
         ServiceManager.getService(project, PreferenceService.class);
-    PreferenceService.Cache cache = preferenceService.getCache();
-    CollectionListModel<IvyModule> model = new CollectionListModel<>(cache.getIvyModules());
-    preferenceService.addObserver(updateModel(model));
+    PreferenceService.State state = preferenceService.getState();
+    CollectionListModel<IvyModule> model = new CollectionListModel<>(state.getIvyModules());
+    preferenceService
+        .asObservable()
+        .map(PreferenceService.State::getIvyModules)
+        .subscribe(createModelUpdater(model));
     modules.setModel(model);
     modules.setCellRenderer(new ModuleCellRenderer(project));
 
@@ -54,9 +58,12 @@ public class ModuleView extends JBPanel<ModuleView> {
     return scrollPanel;
   }
 
-  private Observer updateModel(CollectionListModel<IvyModule> model) {
+  private CacheObserver<List<IvyModule>> createModelUpdater(CollectionListModel<IvyModule> model) {
     return new CacheObserver<>(
-        "Update Ivy Modules in Module View", PreferenceService.Cache::getIvyModules, model::add);
+        "Update Ivy Modules in Module View", ivyModules -> {
+          model.removeAll();
+          model.add(ivyModules);
+    });
   }
 
   @NotNull

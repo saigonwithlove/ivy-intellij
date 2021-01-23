@@ -47,7 +47,7 @@ public enum Ivy7Library implements IvyLibrary {
       null),
   INTERNAL_WEB_CONTAINER("org.eclipse.jst.j2ee.internal.web.container", null, null);
 
-  private String name;
-  private List<String> paths;
-  private List<String> excludedPaths;
+  private final String name;
+  private final List<String> paths;
+  private final List<String> excludedPaths;
 }

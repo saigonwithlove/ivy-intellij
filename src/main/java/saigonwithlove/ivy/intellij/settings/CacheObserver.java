@@ -1,14 +1,14 @@
 package saigonwithlove.ivy.intellij.settings;
 
 import com.intellij.openapi.diagnostic.Logger;
+import io.reactivex.rxjava3.core.Observer;
+import io.reactivex.rxjava3.disposables.Disposable;
 import java.text.MessageFormat;
 import java.util.Collection;
 import java.util.Map;
-import java.util.Observable;
-import java.util.Observer;
 import java.util.function.Consumer;
-import java.util.function.Function;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.tuple.Pair;
@@ -17,26 +17,13 @@ import saigonwithlove.ivy.intellij.shared.MapEquator;
 
 @AllArgsConstructor
 @RequiredArgsConstructor
-public class CacheObserver<T> implements Observer {
+public class CacheObserver<T> implements Observer<T> {
   private static final Logger LOG =
       Logger.getInstance("#" + CacheObserver.class.getCanonicalName());
 
-  @NonNull private String name;
-  @NonNull private Converter<T> converter;
-  @NonNull private Updater<T> updater;
+  @NonNull private final String name;
+  @NonNull private final Handler<T> handler;
   private T value;
-
-  @Override
-  public void update(Observable observable, Object model) {
-    T newValue = converter.apply((PreferenceService.Cache) model);
-    if (!equals(this.value, newValue)) {
-      LOG.info(
-          MessageFormat.format(
-              "{0}: oldValue: {1}, newValue: {2}", this.name, this.value, newValue));
-      this.value = newValue;
-      updater.accept(this.value);
-    }
-  }
 
   private boolean equals(Object a, Object b) {
     if (a == null || b == null) {
@@ -54,7 +41,25 @@ public class CacheObserver<T> implements Observer {
     }
   }
 
-  public static interface Converter<T> extends Function<PreferenceService.Cache, T> {}
+  @Override
+  public void onSubscribe(@io.reactivex.rxjava3.annotations.NonNull Disposable disposable) {}
 
-  public static interface Updater<T> extends Consumer<T> {}
+  @Override
+  public void onNext(@io.reactivex.rxjava3.annotations.NonNull T newValue) {
+    if (!equals(this.value, newValue)) {
+      LOG.info(
+          MessageFormat.format(
+              "{0}: oldValue: {1}, newValue: {2}", this.name, this.value, newValue));
+      this.value = newValue;
+      this.handler.accept(this.value);
+    }
+  }
+
+  @Override
+  public void onError(@io.reactivex.rxjava3.annotations.NonNull Throwable ex) {}
+
+  @Override
+  public void onComplete() {}
+
+  public interface Handler<T> extends Consumer<T> {}
 }

@@ -36,8 +36,10 @@ import org.apache.maven.artifact.versioning.InvalidVersionSpecificationException
 import org.apache.maven.artifact.versioning.VersionRange;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import saigonwithlove.ivy.intellij.engine.IvyEngineService;
+import saigonwithlove.ivy.intellij.engine.IvyEngine;
+import saigonwithlove.ivy.intellij.engine.IvyEngineDefinition;
 import saigonwithlove.ivy.intellij.mirror.FileSyncProcessor;
+import saigonwithlove.ivy.intellij.settings.CacheObserver;
 import saigonwithlove.ivy.intellij.settings.PreferenceService;
 import saigonwithlove.ivy.intellij.shared.IvyBundle;
 import saigonwithlove.ivy.intellij.shared.IvyModule;
@@ -53,18 +55,35 @@ public class IvyDevtoolService {
   private static final String IVY_DEVTOOL_VERSION_RANGE = "[0.2.3,)";
 
   private Project project;
-  private PreferenceService preferenceService;
-  private IvyEngineService ivyEngineService;
+  private Optional<IvyEngine> ivyEngineOpt;
 
   public IvyDevtoolService(Project project) {
     this.project = project;
-    this.preferenceService = ServiceManager.getService(project, PreferenceService.class);
-    this.ivyEngineService = ServiceManager.getService(project, IvyEngineService.class);
+
+    PreferenceService preferenceService =
+        ServiceManager.getService(project, PreferenceService.class);
+    preferenceService
+        .asObservable()
+        .map(PreferenceService.State::getIvyEngine)
+        .subscribe(
+            new CacheObserver<>(
+                "Update Ivy Engine in IvyDevtoolService.",
+                ivyEngine -> {
+                  this.ivyEngineOpt = Optional.ofNullable(ivyEngine);
+                }));
   }
 
   public boolean exists() {
+    if (!this.ivyEngineOpt.isPresent()) {
+      return false;
+    }
+
+    IvyEngine engine = this.ivyEngineOpt.get();
     Optional<VirtualFile> ivyDevtoolDirectoryOpt =
-        Optional.ofNullable(LocalFileSystem.getInstance().findFileByPath(getIvyDevtoolDirectory()));
+        Optional.ofNullable(
+            LocalFileSystem.getInstance()
+                .findFileByPath(
+                    getIvyDevtoolDirectory(engine.getDirectory(), engine.getDefinition())));
     ivyDevtoolDirectoryOpt.ifPresent(
         ivyDevtoolDirectory -> ivyDevtoolDirectory.refresh(false, false));
     return ivyDevtoolDirectoryOpt.map(VirtualFile::isDirectory).orElse(Boolean.FALSE);
@@ -75,9 +94,17 @@ public class IvyDevtoolService {
   }
 
   public boolean isUpdated() {
+    if (!this.ivyEngineOpt.isPresent()) {
+      return false;
+    }
+
+    IvyEngine engine = this.ivyEngineOpt.get();
     Optional<VirtualFile> pomOpt =
         Optional.ofNullable(
-            LocalFileSystem.getInstance().findFileByPath(getIvyDevtoolDirectory() + "/pom.xml"));
+            LocalFileSystem.getInstance()
+                .findFileByPath(
+                    getIvyDevtoolDirectory(engine.getDirectory(), engine.getDefinition())
+                        + "/pom.xml"));
     pomOpt.ifPresent(pom -> pom.refresh(false, false));
     return pomOpt
         .flatMap(Modules::toMavenModel)
@@ -100,14 +127,19 @@ public class IvyDevtoolService {
   }
 
   public void install(ProgressIndicator indicator) {
+    if (!this.ivyEngineOpt.isPresent()) {
+      return;
+    }
+
+    IvyEngine engine = this.ivyEngineOpt.get();
     indicator.setText(IvyBundle.message("tasks.installIvyDevtool.progress.downloading"));
     indicator.setFraction(0.1);
     File ivyDevtoolPackage = downloadIvyDevtool(IVY_DEVTOOL_PACKAGE_URL);
     indicator.setText(IvyBundle.message("tasks.installIvyDevtool.progress.installing"));
     indicator.setFraction(0.5);
     String ivyDevtoolDirectoryText =
-        preferenceService.getCache().getIvyEngineDirectory()
-            + preferenceService.getCache().getIvyEngineDefinition().getApplicationDirectory()
+        engine.getDirectory()
+            + engine.getDefinition().getApplicationDirectory()
             + "/Portal/ivy-devtool/1";
     extract(ivyDevtoolPackage, ivyDevtoolDirectoryText);
     ivyDevtoolPackage.delete();
@@ -116,10 +148,10 @@ public class IvyDevtoolService {
   }
 
   @NotNull
-  private String getIvyDevtoolDirectory() {
-    PreferenceService.Cache cache = preferenceService.getCache();
-    return cache.getIvyEngineDirectory()
-        + cache.getIvyEngineDefinition().getApplicationDirectory()
+  private String getIvyDevtoolDirectory(
+      @NotNull String ivyEngineDirectory, @NotNull IvyEngineDefinition ivyEngineDefinition) {
+    return ivyEngineDirectory
+        + ivyEngineDefinition.getApplicationDirectory()
         + "/Portal/ivy-devtool/1";
   }
 
@@ -189,14 +221,16 @@ public class IvyDevtoolService {
   }
 
   public void deployModule(@NotNull IvyModule ivyModule, @Nullable Task nextTask) {
+    if (!this.ivyEngineOpt.isPresent()) {
+      return;
+    }
+
+    IvyEngine engine = this.ivyEngineOpt.get();
     Path source =
         Paths.get(Preconditions.checkNotNull(ivyModule.getContentRoot().getCanonicalPath()));
     Path target =
         Paths.get(
-            preferenceService.getCache().getIvyEngineDirectory()
-                + "/system/applications/Portal/"
-                + ivyModule.getName()
-                + "/1");
+            engine.getDirectory() + "/system/applications/Portal/" + ivyModule.getName() + "/1");
     FileSyncProcessor.Options options = new FileSyncProcessor.Options();
     FileSyncProcessor fileSyncProcessor = new FileSyncProcessor();
     FileSyncProcessor.UserInterface ui =
@@ -234,8 +268,7 @@ public class IvyDevtoolService {
 
   @NotNull
   private Optional<String> getIvyEngineUrl() {
-    return Optional.ofNullable(ivyEngineService.getRuntime().getPort())
-        .map(port -> "http://localhost:" + port);
+    return this.ivyEngineOpt.map(IvyEngine::getUrl).map(String::valueOf);
   }
 
   public void updateGlobalVariable(@NotNull String name, @NotNull String value) {
@@ -279,11 +312,16 @@ public class IvyDevtoolService {
   }
 
   public boolean isDeployed(@NotNull IvyModule ivyModule) {
+    if (!this.ivyEngineOpt.isPresent()) {
+      return false;
+    }
+
+    IvyEngine engine = this.ivyEngineOpt.get();
     Optional<VirtualFile> processModelVersionDirectoryOpt =
         Optional.ofNullable(
             LocalFileSystem.getInstance()
                 .findFileByPath(
-                    preferenceService.getCache().getIvyEngineDirectory()
+                    engine.getDirectory()
                         + "/system/applications/Portal/"
                         + ivyModule.getName()
                         + "/1"));
@@ -302,7 +340,7 @@ public class IvyDevtoolService {
       String baseIvyEngineUrl =
           getIvyEngineUrl()
               .orElseThrow(() -> new NoSuchElementException("Could not get baseIvyEngineUrl."));
-      URI setGlobalVariableUri =
+      URI setServerPropertyUri =
           new URIBuilder(baseIvyEngineUrl + IVY_DEVTOOL_URL)
               .addParameter("command", "server-property$get-all")
               .build();
@@ -310,7 +348,7 @@ public class IvyDevtoolService {
       return (Map<String, String>)
           new ObjectMapper()
               .readValue(
-                  Request.Get(setGlobalVariableUri).execute().returnContent().asStream(),
+                  Request.Get(setServerPropertyUri).execute().returnContent().asStream(),
                   Map.class);
     } catch (URISyntaxException ex) {
       throw new IllegalArgumentException(ex);

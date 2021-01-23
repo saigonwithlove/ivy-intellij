@@ -34,7 +34,7 @@ public class ModuleCellRenderer extends ColoredListCellRenderer<IvyModule> {
     setIcon(AllIcons.Nodes.Module);
 
     SimpleTextAttributes textAttributes = SimpleTextAttributes.REGULAR_ATTRIBUTES;
-    List<IvyModule> ivyModules = preferenceService.getCache().getIvyModules();
+    List<IvyModule> ivyModules = preferenceService.getState().getIvyModules();
     List<Dependency> missingDependencies = Modules.getMissingIvyDependencies(value, ivyModules);
     if (CollectionUtils.isNotEmpty(missingDependencies)) {
       textAttributes = SimpleTextAttributes.ERROR_ATTRIBUTES;

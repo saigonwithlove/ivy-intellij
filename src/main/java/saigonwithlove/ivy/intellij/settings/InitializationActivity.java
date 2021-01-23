@@ -5,22 +5,17 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
-import com.intellij.openapi.ui.MessageDialogBuilder;
-import com.intellij.openapi.ui.Messages;
+import io.reactivex.rxjava3.core.Observer;
+import java.text.MessageFormat;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.Observer;
+import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
-import org.apache.commons.lang3.tuple.Pair;
-import org.apache.maven.artifact.versioning.ArtifactVersion;
 import org.jetbrains.annotations.NotNull;
 import saigonwithlove.ivy.intellij.action.OpenSettingsAction;
-import saigonwithlove.ivy.intellij.devtool.IvyDevtoolService;
-import saigonwithlove.ivy.intellij.engine.IvyEngineDefinition;
-import saigonwithlove.ivy.intellij.engine.IvyEngineRuntime;
-import saigonwithlove.ivy.intellij.engine.IvyEngineService;
-import saigonwithlove.ivy.intellij.engine.IvyEngineVersions;
+import saigonwithlove.ivy.intellij.engine.IvyEngine;
+import saigonwithlove.ivy.intellij.engine.IvyEngineFactory;
 import saigonwithlove.ivy.intellij.shared.Configuration;
 import saigonwithlove.ivy.intellij.shared.IvyBundle;
 import saigonwithlove.ivy.intellij.shared.IvyModule;
@@ -35,173 +30,103 @@ public class InitializationActivity implements StartupActivity {
   public void runActivity(@NotNull Project project) {
     PreferenceService preferenceService =
         ServiceManager.getService(project, PreferenceService.class);
-    PreferenceService.State state = preferenceService.getState();
 
-    // Update ivy engine definition and libraries
-    preferenceService.addObserver(updateIvyEngineDefinition(project));
-    preferenceService.addObserver(updateIvyDevtoolStatus(project));
-    preferenceService.addObserver(updateIvyEngineLibraries(project));
-    // Restore ivy engine directory from state
-    preferenceService.update(cache -> cache.setIvyEngineDirectory(state.getIvyEngineDirectory()));
-    // Update state for ivy engine directory
-    preferenceService.addObserver(updateIvyEngineDirectoryState(state));
+    LOG.info("subscribe to create Ivy Engine according to changed Ivy Engine Directory.");
+    preferenceService
+        .asObservable()
+        .map(PreferenceService.State::getIvyEngineDirectory)
+        .subscribe(createIvyEngineUpdater(preferenceService, project));
 
-    // Add Ivy Modules cache oberver
-    preferenceService.addObserver(updateIvyPluginStatus(project));
-    // Initialize Ivy Modules cache
-    preferenceService.update(cache -> cache.setIvyModules(Projects.getIvyModules(project)));
-    // Initialize default global variable cache
-    Map<String, String> defaultGlobalVariables =
-        preferenceService.getCache().getIvyModules().stream()
-            .map(IvyModule::getGlobalVariables)
-            .flatMap(Collection::stream)
-            .collect(Collectors.toMap(Configuration::getName, Configuration::getValue));
+    LOG.info(
+        "subscribe to update IntelliJ Libraries when new Ivy Engine created"
+            + "sor delete Ivy related libraries when no Ivy Engine.");
+    preferenceService
+        .asObservable()
+        .map(PreferenceService.State::getIvyEngine)
+        .subscribe(createIntellijLibrariesUpdater());
+
+    /*
+     * TODO should subscribe to module change and update Ivy Modules.
+     */
     preferenceService.update(
-        cache -> cache.getIvyEngine().setGlobalVariables(defaultGlobalVariables));
-    // Restore modified global variables from state
-    preferenceService.update(
-        cache -> {
-          if (state.getModifiedGlobalVariables() != null) {
-            cache.getIvyEngine().setModifiedGlobalVariables(state.getModifiedGlobalVariables());
-          }
+        state -> {
+          List<IvyModule> ivyModules = Projects.getIvyModules(project);
+          LOG.info("Update Ivy Modules into State: " + ivyModules);
+          state.setIvyModules(ivyModules);
+          LOG.info("Disable Ivy Plugin if no Ivy Module existed in project.");
+          state.setPluginEnabled(!ivyModules.isEmpty());
+
+          LOG.info("Synchronize Global Variables.");
+          Map<String, Configuration> globalVariables =
+              ivyModules.stream()
+                  .map(IvyModule::getGlobalVariables)
+                  .flatMap(Collection::stream)
+                  .collect(
+                      Collectors.toMap(Configuration::getName, configuration -> configuration));
+          Map<String, Configuration> storedGlobalVariables = state.getGlobalVariables();
+          storedGlobalVariables.forEach(
+              (storedName, storedConfiguration) -> {
+                globalVariables.computeIfPresent(
+                    storedName,
+                    (name, configuration) -> {
+                      if (storedConfiguration.isModified()) {
+                        configuration.setValue(storedConfiguration.getValue());
+                        LOG.info(
+                            MessageFormat.format(
+                                "Synchronized variable: {0} with stored value: {1}",
+                                name, configuration.getValue()));
+                      }
+                      return configuration;
+                    });
+              });
+          state.setGlobalVariables(globalVariables);
+          return state;
         });
-    // Restore modified server properties from state
-    preferenceService.update(
-        cache -> {
-          if (state.getModifiedServerProperties() != null) {
-            cache.getIvyEngine().setModifiedServerProperties(state.getModifiedServerProperties());
-          }
-        });
-    // Add modified global variable observer
-    preferenceService.addObserver(updateModifiedGlobalVariablesState(state));
-    // Add modified server property observer
-    preferenceService.addObserver(updateModifiedServerPropertiesState(state));
   }
 
-  private Observer updateModifiedServerPropertiesState(PreferenceService.State state) {
-    CacheObserver.Converter<Map<String, String>> converter =
-        cache -> cache.getIvyEngine().getModifiedServerProperties();
+  private Observer<IvyEngine> createIntellijLibrariesUpdater() {
     return new CacheObserver<>(
-        "Update Modified Server Properties in State",
-        converter,
-        state::setModifiedServerProperties);
-  }
-
-  private Observer updateIvyPluginStatus(@NotNull Project project) {
-    CacheObserver.Updater<List<IvyModule>> updater =
-        ivyModules -> {
-          PreferenceService preferenceService =
-              ServiceManager.getService(project, PreferenceService.class);
-          preferenceService.update(cache -> cache.setEnabled(!cache.getIvyModules().isEmpty()));
-        };
-    return new CacheObserver<>(
-        "Update Ivy Plugin status", PreferenceService.Cache::getIvyModules, updater);
+        "Update Intellij Libraries",
+        ivyEngine -> {
+          if (ivyEngine != null) {
+            ApplicationManager.getApplication()
+                .invokeLater(
+                    () ->
+                        ApplicationManager.getApplication()
+                            .runWriteAction(ivyEngine::buildIntellijLibraries));
+          } else {
+            // TODO should delete all Ivy related libraries when no Ivy Engine.
+          }
+        });
   }
 
   @NotNull
-  private Observer updateModifiedGlobalVariablesState(PreferenceService.State state) {
-    CacheObserver.Converter<Map<String, String>> converter =
-        cache -> cache.getIvyEngine().getModifiedGlobalVariables();
+  private Observer<String> createIvyEngineUpdater(
+      @NotNull PreferenceService preferenceService, @NotNull Project project) {
     return new CacheObserver<>(
-        "Update Modified Global Variables in State", converter, state::setModifiedGlobalVariables);
-  }
-
-  @NotNull
-  Observer updateIvyEngineDefinition(@NotNull Project project) {
-    CacheObserver.Updater<String> updater =
+        "Create Ivy Engine from ivyEngineDirectory",
         ivyEngineDirectory -> {
-          IvyEngineService ivyEngineService =
-              ServiceManager.getService(project, IvyEngineService.class);
-          PreferenceService preferenceService =
-              ServiceManager.getService(project, PreferenceService.class);
-          if (!ivyEngineService.isValidIvyEngine()) {
+          try {
+            IvyEngineFactory ivyEngineFactory = new IvyEngineFactory(ivyEngineDirectory, project);
+            IvyEngine engine = ivyEngineFactory.newEngine();
+            preferenceService.update(
+                state -> {
+                  state.setIvyEngine(engine);
+                  return state;
+                });
+            LOG.info("Create Ivy Engine: " + engine.getVersion());
+          } catch (NoSuchElementException ex) {
+            preferenceService.update(
+                state -> {
+                  state.setIvyEngine(null);
+                  return state;
+                });
+            LOG.error("Could not create Ivy Engine.", ex);
             Notifier.info(
                 project,
                 new OpenSettingsAction(project),
                 IvyBundle.message("notification.ivyEngineDirectoryInvalid"));
-            preferenceService.update(cache -> cache.setIvyEngineDefinition(null));
-            return;
           }
-          ArtifactVersion ivyEngineVersion = IvyEngineVersions.parseVersion(ivyEngineDirectory);
-          LOG.info("Detected Axon.ivy version: " + ivyEngineVersion);
-          preferenceService.update(
-              cache ->
-                  cache.setIvyEngineDefinition(IvyEngineDefinition.fromVersion(ivyEngineVersion)));
-        };
-    return new CacheObserver<>(
-        "Update Ivy Engine Definition", PreferenceService.Cache::getIvyEngineDirectory, updater);
-  }
-
-  @NotNull
-  private Observer updateIvyDevtoolStatus(@NotNull Project project) {
-    CacheObserver.Updater<IvyEngineDefinition> updater =
-        ivyEngineDefinition -> {
-          PreferenceService preferenceService =
-              ServiceManager.getService(project, PreferenceService.class);
-          if (ivyEngineDefinition != null) {
-            IvyDevtoolService ivyDevtoolService =
-                ServiceManager.getService(project, IvyDevtoolService.class);
-            // Update toggle ivy dev tool status
-            preferenceService.update(
-                cache -> cache.getIvyDevtool().setEnabled(ivyDevtoolService.exists()));
-          } else {
-            preferenceService.update(cache -> cache.getIvyDevtool().setEnabled(false));
-          }
-        };
-    return new CacheObserver<>(
-        "Update Ivy Devtool Status", PreferenceService.Cache::getIvyEngineDefinition, updater);
-  }
-
-  @NotNull
-  private Observer updateIvyEngineLibraries(@NotNull Project project) {
-    CacheObserver.Converter<Pair<String, IvyEngineDefinition>> converter =
-        cache -> Pair.of(cache.getIvyEngineDirectory(), cache.getIvyEngineDefinition());
-    CacheObserver.Updater<Pair<String, IvyEngineDefinition>> updater =
-        pair -> {
-          if (pair.getRight() == null) {
-            // Could not update libraries without Ivy Engine Definition
-            return;
-          }
-          IvyEngineService ivyEngineService =
-              ServiceManager.getService(project, IvyEngineService.class);
-
-          if (ivyEngineService.libraryDirectoryExists()) {
-            ApplicationManager.getApplication()
-                .runWriteAction(
-                    () ->
-                        ServiceManager.getService(project, IvyEngineService.class).addLibraries());
-          } else {
-            int result =
-                MessageDialogBuilder.yesNo(
-                        IvyBundle.message("settings.engine.startEngineDialog.title"),
-                        IvyBundle.message("settings.engine.startEngineDialog.message"))
-                    .yesText(IvyBundle.message("settings.engine.startEngineDialog.confirm"))
-                    .noText(IvyBundle.message("settings.engine.startEngineDialog.cancel"))
-                    .project(project)
-                    .show();
-            if (result == Messages.YES) {
-              IvyEngineRuntime runtime = ivyEngineService.getRuntime();
-              runtime
-                  .getObservable()
-                  .addObserver(
-                      (runtimeObservable, runtimeObject) -> {
-                        IvyEngineRuntime rt = (IvyEngineRuntime) runtimeObject;
-                        if (rt.getStatus() == IvyEngineRuntime.Status.RUNNING) {
-                          rt.stop();
-                        }
-                      });
-              runtime.start();
-            }
-          }
-        };
-    return new CacheObserver<>("Update Ivy Engine Libraries", converter, updater);
-  }
-
-  @NotNull
-  private Observer updateIvyEngineDirectoryState(PreferenceService.State state) {
-    return new CacheObserver<>(
-        "Update Ivy Engine Directory in State",
-        PreferenceService.Cache::getIvyEngineDirectory,
-        state::setIvyEngineDirectory);
+        });
   }
 }

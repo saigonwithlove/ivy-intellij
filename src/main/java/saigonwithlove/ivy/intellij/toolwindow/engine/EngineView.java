@@ -17,12 +17,10 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.util.List;
 import java.util.Map;
-import java.util.Observer;
 import javax.swing.JComponent;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.MutableTreeNode;
-import org.apache.commons.lang3.tuple.Pair;
 import org.jetbrains.annotations.NotNull;
 import saigonwithlove.ivy.intellij.action.OpenSettingsAction;
 import saigonwithlove.ivy.intellij.action.StartEngineAction;
@@ -68,9 +66,15 @@ public class EngineView extends JBPanel<EngineView> {
     tree.addMouseListener(new EditGlobalVariableListener(project, tree));
     tree.addMouseListener(new EditServerPropertyListener(project, tree));
 
-    preferenceService.addObserver(updateGlobalVariablesTree(globalVariablesRoot, tree));
+    preferenceService
+        .asObservable()
+        .map(PreferenceService.State::getGlobalVariables)
+        .subscribe(updateGlobalVariablesTree(globalVariablesRoot, tree));
 
-    preferenceService.addObserver(updateServerPropertiesTree(serverPropertyRoot, tree));
+    preferenceService
+        .asObservable()
+        .map(PreferenceService.State::getServerProperties)
+        .subscribe(updateServerPropertiesTree(serverPropertyRoot, tree));
 
     GridBagConstraints constraints = new GridBagConstraints();
     constraints.anchor = GridBagConstraints.FIRST_LINE_START;
@@ -84,35 +88,25 @@ public class EngineView extends JBPanel<EngineView> {
   }
 
   @NotNull
-  private Observer updateServerPropertiesTree(
+  private CacheObserver<Map<String, Configuration>> updateServerPropertiesTree(
       @NotNull MutableTreeNode serverPropertyRoot, @NotNull Tree tree) {
-    CacheObserver.Converter<Pair<Map<String, String>, Map<String, String>>> converter =
-        cache ->
-            Pair.of(
-                cache.getIvyEngine().getServerProperties(),
-                cache.getIvyEngine().getModifiedServerProperties());
-    CacheObserver.Updater<Pair<Map<String, String>, Map<String, String>>> updater =
-        pair -> {
-          updateServerProperties(serverPropertyRoot, pair.getKey(), pair.getValue());
+    return new CacheObserver<>(
+        "Update Server Properties in Engine View",
+        serverProperties -> {
+          updateServerProperties(serverPropertyRoot, serverProperties);
           ((DefaultTreeModel) tree.getModel()).reload(serverPropertyRoot);
-        };
-    return new CacheObserver<>("Update Server Properties in Engine View", converter, updater);
+        });
   }
 
   @NotNull
-  private Observer updateGlobalVariablesTree(
+  private CacheObserver<Map<String, Configuration>> updateGlobalVariablesTree(
       @NotNull MutableTreeNode globalVariablesRoot, @NotNull Tree tree) {
-    CacheObserver.Converter<Pair<Map<String, String>, Map<String, String>>> converter =
-        cache ->
-            Pair.of(
-                cache.getIvyEngine().getGlobalVariables(),
-                cache.getIvyEngine().getModifiedGlobalVariables());
-    CacheObserver.Updater<Pair<Map<String, String>, Map<String, String>>> updater =
-        pair -> {
-          updateGlobalVariables(globalVariablesRoot, pair.getLeft(), pair.getRight());
+    return new CacheObserver<>(
+        "Update Global Variables in Engine View",
+        globalVariables -> {
+          updateGlobalVariables(globalVariablesRoot, globalVariables);
           ((DefaultTreeModel) tree.getModel()).reload(globalVariablesRoot);
-        };
-    return new CacheObserver<>("Update Global Variables in Engine View", converter, updater);
+        });
   }
 
   @NotNull
@@ -120,9 +114,7 @@ public class EngineView extends JBPanel<EngineView> {
     DefaultMutableTreeNode globalVariablesRoot =
         new GlobalVariableRoot(IvyBundle.message("toolWindow.engine.globalVariable.title"));
     this.updateGlobalVariables(
-        globalVariablesRoot,
-        preferenceService.getCache().getIvyEngine().getGlobalVariables(),
-        preferenceService.getCache().getIvyEngine().getModifiedGlobalVariables());
+        globalVariablesRoot, preferenceService.getState().getGlobalVariables());
     return globalVariablesRoot;
   }
 
@@ -144,10 +136,8 @@ public class EngineView extends JBPanel<EngineView> {
 
   private void updateGlobalVariables(
       @NotNull MutableTreeNode globalVariablesRoot,
-      @NotNull Map<String, String> defaultGlobalVariables,
-      Map<String, String> modifiedGlobalVariables) {
-    List<Configuration> items =
-        Configurations.buildConfigurations(defaultGlobalVariables, modifiedGlobalVariables);
+      @NotNull Map<String, Configuration> globalVariables) {
+    List<Configuration> items = Configurations.buildConfigurations(globalVariables);
     for (int i = 0; i < globalVariablesRoot.getChildCount(); i++) {
       globalVariablesRoot.remove(i);
     }
@@ -157,11 +147,8 @@ public class EngineView extends JBPanel<EngineView> {
   }
 
   private void updateServerProperties(
-      MutableTreeNode serverPropertyRoot,
-      Map<String, String> defaultServerProperties,
-      Map<String, String> modifiedServerProperties) {
-    List<Configuration> items =
-        Configurations.buildConfigurations(defaultServerProperties, modifiedServerProperties);
+      MutableTreeNode serverPropertyRoot, Map<String, Configuration> serverProperties) {
+    List<Configuration> items = Configurations.buildConfigurations(serverProperties);
     for (int i = 0; i < serverPropertyRoot.getChildCount(); i++) {
       serverPropertyRoot.remove(i);
     }
