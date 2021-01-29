@@ -51,6 +51,7 @@ public class IvySettingsView implements SearchableConfigurable, Configurable.NoS
     JBPanel wrapper = new JBPanel(new GridBagLayout());
     GridBagConstraints constraints = new GridBagConstraints();
     constraints.anchor = GridBagConstraints.FIRST_LINE_START;
+    constraints.fill = GridBagConstraints.HORIZONTAL;
     constraints.gridx = 0;
     constraints.gridy = 0;
     constraints.weighty = 1.0;
