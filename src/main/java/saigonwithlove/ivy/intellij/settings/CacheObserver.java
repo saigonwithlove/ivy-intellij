@@ -1,5 +1,6 @@
 package saigonwithlove.ivy.intellij.settings;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import io.reactivex.rxjava3.core.Observer;
 import io.reactivex.rxjava3.disposables.Disposable;
@@ -8,7 +9,6 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.function.Consumer;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.tuple.Pair;
@@ -51,7 +51,7 @@ public class CacheObserver<T> implements Observer<T> {
           MessageFormat.format(
               "{0}: oldValue: {1}, newValue: {2}", this.name, this.value, newValue));
       this.value = newValue;
-      this.handler.accept(this.value);
+      ApplicationManager.getApplication().invokeLater(() -> this.handler.accept(this.value));
     }
   }
 

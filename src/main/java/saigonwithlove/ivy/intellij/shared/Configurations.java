@@ -2,7 +2,6 @@ package saigonwithlove.ivy.intellij.shared;
 
 import com.google.common.base.Preconditions;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.xmlb.Converter;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
@@ -14,7 +13,6 @@ import java.util.stream.Collectors;
 import lombok.experimental.UtilityClass;
 import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 @UtilityClass
 public class Configurations {
@@ -81,20 +79,5 @@ public class Configurations {
                     .build())
         .sorted((a, b) -> a.getName().compareToIgnoreCase(b.getName()))
         .collect(Collectors.toList());
-  }
-
-  public static class StateConverter extends Converter<Configuration> {
-
-    @Nullable
-    @Override
-    public Configuration fromString(@NotNull String value) {
-      return null;
-    }
-
-    @Nullable
-    @Override
-    public String toString(@NotNull Configuration value) {
-      return null;
-    }
   }
 }

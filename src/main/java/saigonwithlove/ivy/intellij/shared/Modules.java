@@ -1,9 +1,15 @@
 package saigonwithlove.ivy.intellij.shared;
 
+import com.intellij.openapi.compiler.CompileStatusNotification;
+import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.subjects.CompletableSubject;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.text.Collator;
@@ -114,5 +120,15 @@ public class Modules {
       LOG.error("Could not read pom.xml.", ex);
       return Optional.empty();
     }
+  }
+
+  public static Completable compile(@NotNull Project project, @NotNull IvyModule ivyModule) {
+    CompletableSubject completableSubject = CompletableSubject.create();
+    CompileStatusNotification notification =
+        (aborted, errors, warnings, compileContext) -> {
+          completableSubject.onComplete();
+        };
+    CompilerManager.getInstance(project).make(ivyModule.getModule(), notification);
+    return completableSubject;
   }
 }
