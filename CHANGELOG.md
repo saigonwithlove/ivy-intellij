@@ -11,9 +11,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Use RxJava to manage State change.
 - Implement the new way to manage Ivy Engine, the handling for each Ivy version is separated into different classes.
+- Polish InitializationActivity.
+- Clean up old Process Models when creating Ivy Engine, because it may not relevant for existing project.
 
 ### Fixed
 - Cannot restore Server Properties in State.
+- Make Ivy Engine directory setting fit the width of Setting Panel.
 
 ## [v0.1.12] - 2020-05-03
 ### Added
