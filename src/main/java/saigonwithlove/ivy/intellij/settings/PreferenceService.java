@@ -68,11 +68,6 @@ public class PreferenceService implements PersistentStateComponent<PreferenceSer
     private Map<String, Configuration> serverProperties = new HashMap<>();
     private Map<String, List<String>> ivyLibraries = new HashMap<>();
 
-    /*
-     * The devtool status must be handled inside Ivy Engine.
-     */
-    @Deprecated private boolean devtoolEnabled;
-
     @Nullable
     @Getter(onMethod = @__({@Transient}))
     private IvyEngine ivyEngine;

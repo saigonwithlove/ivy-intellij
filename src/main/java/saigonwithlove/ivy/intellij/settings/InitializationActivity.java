@@ -48,40 +48,45 @@ public class InitializationActivity implements StartupActivity {
     /*
      * TODO should subscribe to module change and update Ivy Modules.
      */
-    preferenceService.update(
-        state -> {
-          List<IvyModule> ivyModules = Projects.getIvyModules(project);
-          LOG.info("Update Ivy Modules into State: " + ivyModules);
-          state.setIvyModules(ivyModules);
-          LOG.info("Disable Ivy Plugin if no Ivy Module existed in project.");
-          state.setPluginEnabled(!ivyModules.isEmpty());
+    Runnable miscUpdater =
+        () -> {
+          preferenceService.update(
+              state -> {
+                List<IvyModule> ivyModules = Projects.getIvyModules(project);
+                LOG.info("Update Ivy Modules into State: " + ivyModules);
+                state.setIvyModules(ivyModules);
+                LOG.info("Disable Ivy Plugin if no Ivy Module existed in project.");
+                state.setPluginEnabled(!ivyModules.isEmpty());
 
-          LOG.info("Synchronize Global Variables.");
-          Map<String, Configuration> globalVariables =
-              ivyModules.stream()
-                  .map(IvyModule::getGlobalVariables)
-                  .flatMap(Collection::stream)
-                  .collect(
-                      Collectors.toMap(Configuration::getName, configuration -> configuration));
-          Map<String, Configuration> storedGlobalVariables = state.getGlobalVariables();
-          storedGlobalVariables.forEach(
-              (storedName, storedConfiguration) -> {
-                globalVariables.computeIfPresent(
-                    storedName,
-                    (name, configuration) -> {
-                      if (storedConfiguration.isModified()) {
-                        configuration.setValue(storedConfiguration.getValue());
-                        LOG.info(
-                            MessageFormat.format(
-                                "Synchronized variable: {0} with stored value: {1}",
-                                name, configuration.getValue()));
-                      }
-                      return configuration;
+                LOG.info("Synchronize Global Variables.");
+                Map<String, Configuration> globalVariables =
+                    ivyModules.stream()
+                        .map(IvyModule::getGlobalVariables)
+                        .flatMap(Collection::stream)
+                        .collect(
+                            Collectors.toMap(
+                                Configuration::getName, configuration -> configuration));
+                Map<String, Configuration> storedGlobalVariables = state.getGlobalVariables();
+                storedGlobalVariables.forEach(
+                    (storedName, storedConfiguration) -> {
+                      globalVariables.computeIfPresent(
+                          storedName,
+                          (name, configuration) -> {
+                            if (storedConfiguration.isModified()) {
+                              configuration.setValue(storedConfiguration.getValue());
+                              LOG.info(
+                                  MessageFormat.format(
+                                      "Synchronized variable: {0} with stored value: {1}",
+                                      name, configuration.getValue()));
+                            }
+                            return configuration;
+                          });
                     });
+                state.setGlobalVariables(globalVariables);
+                return state;
               });
-          state.setGlobalVariables(globalVariables);
-          return state;
-        });
+        };
+    ApplicationManager.getApplication().invokeLater(miscUpdater);
   }
 
   private Observer<IvyEngine> createIntellijLibrariesUpdater() {
@@ -89,11 +94,7 @@ public class InitializationActivity implements StartupActivity {
         "Update Intellij Libraries",
         ivyEngine -> {
           if (ivyEngine != null) {
-            ApplicationManager.getApplication()
-                .invokeLater(
-                    () ->
-                        ApplicationManager.getApplication()
-                            .runWriteAction(ivyEngine::buildIntellijLibraries));
+            ApplicationManager.getApplication().runWriteAction(ivyEngine::buildIntellijLibraries);
           } else {
             // TODO should delete all Ivy related libraries when no Ivy Engine.
           }
@@ -109,6 +110,9 @@ public class InitializationActivity implements StartupActivity {
           try {
             IvyEngineFactory ivyEngineFactory = new IvyEngineFactory(ivyEngineDirectory, project);
             IvyEngine engine = ivyEngineFactory.newEngine();
+            LOG.info(
+                "Initialize Ivy Engine with Devtool, and other configurations to work with Ivy Plugin.");
+            engine.initialize();
             preferenceService.update(
                 state -> {
                   state.setIvyEngine(engine);
