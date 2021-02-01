@@ -15,7 +15,6 @@ import java.awt.BorderLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.util.List;
-import java.util.Observer;
 import javax.swing.JComponent;
 import org.jetbrains.annotations.NotNull;
 import saigonwithlove.ivy.intellij.action.DeployModuleAction;
@@ -60,10 +59,11 @@ public class ModuleView extends JBPanel<ModuleView> {
 
   private CacheObserver<List<IvyModule>> createModelUpdater(CollectionListModel<IvyModule> model) {
     return new CacheObserver<>(
-        "Update Ivy Modules in Module View", ivyModules -> {
+        "Update Ivy Modules in Module View",
+        ivyModules -> {
           model.removeAll();
           model.add(ivyModules);
-    });
+        });
   }
 
   @NotNull

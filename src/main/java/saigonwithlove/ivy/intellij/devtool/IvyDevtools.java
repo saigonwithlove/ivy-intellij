@@ -40,12 +40,15 @@ import saigonwithlove.ivy.intellij.shared.Modules;
 
 @UtilityClass
 public class IvyDevtools {
-  public static final String IVY_DEVTOOL_URL =
+  public static final String IVY7_DEVTOOL_URL =
       "/ivy/pro/Portal/ivy-devtool/16AE38ED14569A2A/engine.ivp";
+  public static final String IVY8_DEVTOOL_URL =
+      "/ivy/pro/demo-portal/ivy-devtool/16AE38ED14569A2A/engine.ivp";
 
   private static final Logger LOG = Logger.getInstance("#" + IvyDevtools.class.getCanonicalName());
   private static final String IVY_DEVTOOL_VERSION_RANGE = "[0.2.3,)";
-  private static final String IVY_DEVTOOL_PACKAGE_URL =
+
+  public static final String IVY_DEVTOOL_PACKAGE_URL =
       "https://github.com/saigonwithlove/ivy-devtool/releases/download/ivy7/ivy-devtool.iar";
 
   public static void installIvyDevtool(@NotNull IvyEngine ivyEngine) {
@@ -59,12 +62,12 @@ public class IvyDevtools {
   public static void deployIvyModule(@NotNull IvyEngine ivyEngine, @NotNull IvyModule ivyModule) {
     Preconditions.checkArgument(
         ivyDevtoolExists(ivyEngine),
-        "Could not deploy Ivy Module {0} because Ivy Devtool is not existed.",
-        ivyModule.getName());
+        "Could not deploy Ivy Module "
+            + ivyModule.getName()
+            + " because Ivy Devtool is not existed.");
     Preconditions.checkArgument(
         isIvyDevtoolUpdated(ivyEngine),
-        "Could not deploy Ivy Module {0} because Ivy Devtool is outdated.",
-        ivyModule.getName());
+        "Could not deploy Ivy Module " + ivyModule.getName() + " because Ivy Devtool is outdated.");
 
     /*
      * Synchronize Ivy Module from project to Ivy Application.
@@ -72,7 +75,13 @@ public class IvyDevtools {
     Path source =
         Paths.get(Preconditions.checkNotNull(ivyModule.getContentRoot().getCanonicalPath()));
     Path target =
-        Paths.get(ivyEngine.getDefaultApplicationDirectory() + "/" + ivyModule.getName() + "/1");
+        Paths.get(
+            ivyEngine.getDirectory()
+                + "/"
+                + ivyEngine.getDefinition().getDefaultApplicationDirectory()
+                + "/"
+                + ivyModule.getName()
+                + "/1");
     FileSyncProcessor.Options options = new FileSyncProcessor.Options();
     FileSyncProcessor fileSyncProcessor = new FileSyncProcessor();
     FileSyncProcessor.UserInterface ui =
@@ -103,11 +112,16 @@ public class IvyDevtools {
   }
 
   private static void reloadIvyModule(@NotNull IvyEngine ivyEngine, @NotNull IvyModule ivyModule) {
+    reloadProcessModel(ivyEngine, ivyModule.getName());
+  }
+
+  public static void reloadProcessModel(
+      @NotNull IvyEngine ivyEngine, @NotNull String processModelName) {
     if (ivyEngine.getStatus() != IvyEngine.Status.RUNNING) {
       LOG.info(
           MessageFormat.format(
               "Ivy Engine is {0}, skip reload Ivy Module {1}",
-              ivyEngine.getStatus(), ivyModule.getName()));
+              ivyEngine.getStatus(), processModelName));
       return;
     }
 
@@ -118,9 +132,9 @@ public class IvyDevtools {
               .map(String::valueOf)
               .orElseThrow(() -> new NoSuchElementException("Could not get URL of Ivy Engine."));
       URI reloadModuleUri =
-          new URIBuilder(baseIvyEngineUrl + IVY_DEVTOOL_URL)
+          new URIBuilder(baseIvyEngineUrl + getIvyDevtoolUrl(ivyEngine))
               .addParameter("command", "module$reload")
-              .addParameter("pm", ivyModule.getName())
+              .addParameter("pm", processModelName)
               .addParameter("pmv", "1")
               .build();
 
@@ -136,12 +150,15 @@ public class IvyDevtools {
     File iarPackage = downloadIar(iarUrlText);
     Model mavenModel = getMavenModel(iarPackage);
     String pmvDirectoryText =
-        MessageFormat.format(
-            "{0}/Portal/{1}/1",
-            ivyEngine.getDirectory() + ivyEngine.getDefinition().getApplicationDirectory(),
-            mavenModel.getArtifactId());
+        ivyEngine.getDirectory()
+            + "/"
+            + ivyEngine.getDefinition().getDefaultApplicationDirectory()
+            + "/"
+            + mavenModel.getArtifactId()
+            + "/1";
     extractIar(iarPackage, pmvDirectoryText);
     iarPackage.delete();
+    reloadProcessModel(ivyEngine, mavenModel.getArtifactId());
   }
 
   public static void updateServerProperty(
@@ -161,7 +178,7 @@ public class IvyDevtools {
               .map(String::valueOf)
               .orElseThrow(() -> new NoSuchElementException("Could not get URL of Ivy Engine."));
       URI setServerPropertyUri =
-          new URIBuilder(baseIvyEngineUrl + IvyDevtools.IVY_DEVTOOL_URL)
+          new URIBuilder(baseIvyEngineUrl + getIvyDevtoolUrl(ivyEngine))
               .addParameter("command", "server-property$set")
               .addParameter("name", configuration.getName())
               .addParameter("value", configuration.getValue())
@@ -190,7 +207,7 @@ public class IvyDevtools {
               .map(String::valueOf)
               .orElseThrow(() -> new NoSuchElementException("Could not get URL of Ivy Engine."));
       URI setGlobalVariableUri =
-          new URIBuilder(baseIvyEngineUrl + IvyDevtools.IVY_DEVTOOL_URL)
+          new URIBuilder(baseIvyEngineUrl + getIvyDevtoolUrl(ivyEngine))
               .addParameter("command", "global-variable$set")
               .addParameter("name", configuration.getName())
               .addParameter("value", configuration.getValue())
@@ -211,7 +228,7 @@ public class IvyDevtools {
               .map(String::valueOf)
               .orElseThrow(() -> new NoSuchElementException("Could not get URL of Ivy Engine."));
       URI setServerPropertyUri =
-          new URIBuilder(baseIvyEngineUrl + IvyDevtools.IVY_DEVTOOL_URL)
+          new URIBuilder(baseIvyEngineUrl + getIvyDevtoolUrl(ivyEngine))
               .addParameter("command", "server-property$get-all")
               .build();
 
@@ -238,7 +255,7 @@ public class IvyDevtools {
   }
 
   @NotNull
-  private static File downloadIar(@NotNull String iarUrlText) {
+  public static File downloadIar(@NotNull String iarUrlText) {
     try {
       URL iarUrl = new URL(iarUrlText);
       String fileName = FilenameUtils.getName(iarUrl.getPath());
@@ -317,38 +334,65 @@ public class IvyDevtools {
   private static boolean ivyDevtoolExists(@NotNull IvyEngine ivyEngine) {
     Optional<VirtualFile> ivyDevtoolDirectoryOpt =
         Optional.ofNullable(
-            LocalFileSystem.getInstance().findFileByPath(getIvyDevtoolDirectory(ivyEngine)));
-    ivyDevtoolDirectoryOpt.ifPresent(
-        ivyDevtoolDirectory -> ivyDevtoolDirectory.refresh(false, false));
-    return ivyDevtoolDirectoryOpt.map(VirtualFile::isDirectory).orElse(Boolean.FALSE);
+            LocalFileSystem.getInstance().refreshAndFindFileByPath(getIvyDevtoolPath(ivyEngine)));
+    return ivyDevtoolDirectoryOpt.map(VirtualFile::exists).orElse(Boolean.FALSE);
   }
 
   @NotNull
-  private static String getIvyDevtoolDirectory(@NotNull IvyEngine ivyEngine) {
+  private static String getIvyDevtoolPath(@NotNull IvyEngine ivyEngine) {
     return ivyEngine.getDirectory()
-        + ivyEngine.getDefinition().getApplicationDirectory()
-        + "/Portal/ivy-devtool/1";
+        + "/"
+        + ivyEngine.getDefinition().getDefaultApplicationDirectory()
+        + "/"
+        + ivyEngine.getDefinition().getIvyDevtoolProcessModelVersionPath();
   }
 
   private static boolean isIvyDevtoolUpdated(@NotNull IvyEngine ivyEngine) {
-    Optional<VirtualFile> pomOpt =
-        Optional.ofNullable(
-            LocalFileSystem.getInstance()
-                .findFileByPath(getIvyDevtoolDirectory(ivyEngine) + "/pom.xml"));
-    pomOpt.ifPresent(pom -> pom.refresh(false, false));
-    return pomOpt
-        .flatMap(Modules::toMavenModel)
-        .map(model -> new DefaultArtifactVersion(model.getVersion()))
-        .map(
-            version -> {
-              try {
-                return VersionRange.createFromVersionSpec(IVY_DEVTOOL_VERSION_RANGE)
-                    .containsVersion(version);
-              } catch (InvalidVersionSpecificationException ex) {
-                LOG.error("Could not evaluate version of Ivy Devtool: " + version, ex);
-                return false;
-              }
-            })
-        .orElse(Boolean.FALSE);
+    VirtualFile ivyDevtoolProcessModelVersion =
+        Preconditions.checkNotNull(
+            LocalFileSystem.getInstance().refreshAndFindFileByPath(getIvyDevtoolPath(ivyEngine)),
+            "Ivy Devtool Process Model Version is not existed.");
+    if (ivyDevtoolProcessModelVersion.isDirectory()) {
+      return Optional.ofNullable(ivyDevtoolProcessModelVersion.findChild("pom.xml"))
+          .flatMap(Modules::toMavenModel)
+          .map(model -> new DefaultArtifactVersion(model.getVersion()))
+          .map(
+              version -> {
+                try {
+                  return VersionRange.createFromVersionSpec(IVY_DEVTOOL_VERSION_RANGE)
+                      .containsVersion(version);
+                } catch (InvalidVersionSpecificationException ex) {
+                  LOG.error("Could not evaluate version of Ivy Devtool: " + version, ex);
+                  return false;
+                }
+              })
+          .orElse(Boolean.FALSE);
+    } else {
+      Model mavenModel = getMavenModel(new File(getIvyDevtoolPath(ivyEngine)));
+      return Optional.of(mavenModel)
+          .map(model -> new DefaultArtifactVersion(model.getVersion()))
+          .map(
+              version -> {
+                try {
+                  return VersionRange.createFromVersionSpec(IVY_DEVTOOL_VERSION_RANGE)
+                      .containsVersion(version);
+                } catch (InvalidVersionSpecificationException ex) {
+                  LOG.error("Could not evaluate version of Ivy Devtool: " + version, ex);
+                  return false;
+                }
+              })
+          .orElse(Boolean.FALSE);
+    }
+  }
+
+  private static String getIvyDevtoolUrl(@NotNull IvyEngine ivyEngine) {
+    if (ivyEngine.getVersion().getMajorVersion() == 7) {
+      return IVY7_DEVTOOL_URL;
+    } else if (ivyEngine.getVersion().getMajorVersion() == 8) {
+      return IVY8_DEVTOOL_URL;
+    } else {
+      throw new NoSuchElementException(
+          "No Ivy Devtool Url for Ivy Engine version: " + ivyEngine.getVersion());
+    }
   }
 }

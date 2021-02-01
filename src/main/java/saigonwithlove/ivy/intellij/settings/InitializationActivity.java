@@ -4,18 +4,29 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.libraries.LibraryTable;
+import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.startup.StartupActivity;
 import io.reactivex.rxjava3.core.Observer;
 import java.text.MessageFormat;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Optional;
+import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.jetbrains.annotations.NotNull;
 import saigonwithlove.ivy.intellij.action.OpenSettingsAction;
+import saigonwithlove.ivy.intellij.engine.Ivy6Library;
+import saigonwithlove.ivy.intellij.engine.Ivy7Library;
+import saigonwithlove.ivy.intellij.engine.Ivy8Library;
 import saigonwithlove.ivy.intellij.engine.IvyEngine;
 import saigonwithlove.ivy.intellij.engine.IvyEngineFactory;
+import saigonwithlove.ivy.intellij.engine.IvyLibraries;
+import saigonwithlove.ivy.intellij.engine.IvyLibrary;
 import saigonwithlove.ivy.intellij.shared.Configuration;
 import saigonwithlove.ivy.intellij.shared.IvyBundle;
 import saigonwithlove.ivy.intellij.shared.IvyModule;
@@ -39,10 +50,10 @@ public class InitializationActivity implements StartupActivity {
 
     LOG.info(
         "subscribe to update IntelliJ Libraries when new Ivy Engine created"
-            + "sor delete Ivy related libraries when no Ivy Engine.");
+            + "or delete Ivy related libraries when no Ivy Engine.");
     preferenceService
         .asObservable()
-        .map(PreferenceService.State::getIvyEngine)
+        .map(state -> Optional.ofNullable(state.getIvyEngine()))
         .subscribe(createIntellijLibrariesUpdater());
 
     /*
@@ -89,15 +100,27 @@ public class InitializationActivity implements StartupActivity {
     ApplicationManager.getApplication().invokeLater(miscUpdater);
   }
 
-  private Observer<IvyEngine> createIntellijLibrariesUpdater() {
+  private Observer<Optional<IvyEngine>> createIntellijLibrariesUpdater() {
     return new CacheObserver<>(
         "Update Intellij Libraries",
-        ivyEngine -> {
-          if (ivyEngine != null) {
-            ApplicationManager.getApplication().runWriteAction(ivyEngine::buildIntellijLibraries);
-          } else {
-            // TODO should delete all Ivy related libraries when no Ivy Engine.
-          }
+        ivyEngineOpt -> {
+          Runnable runner =
+              () -> {
+                if (ivyEngineOpt.isPresent()) {
+                  ivyEngineOpt.get().buildIntellijLibraries();
+                } else {
+                  LibraryTable libraryTable =
+                      LibraryTablesRegistrar.getInstance().getLibraryTable();
+                  LibraryTable.ModifiableModel modifiableModel = libraryTable.getModifiableModel();
+                  Stream.of(Ivy6Library.values(), Ivy7Library.values(), Ivy8Library.values())
+                      .flatMap((Function<IvyLibrary[], Stream<IvyLibrary>>) Arrays::stream)
+                      .map(IvyLibrary::getName)
+                      .forEach(
+                          libraryName -> IvyLibraries.removeLibrary(libraryTable, libraryName));
+                  modifiableModel.commit();
+                }
+              };
+          ApplicationManager.getApplication().runWriteAction(runner);
         });
   }
 

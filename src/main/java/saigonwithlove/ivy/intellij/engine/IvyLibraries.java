@@ -80,4 +80,10 @@ public class IvyLibraries {
       @NotNull IvyLibrary library, @NotNull String ivyEngineDirectory) {
     return !isDefined(library, ivyEngineDirectory);
   }
+
+  public static void removeLibrary(
+      @NotNull LibraryTable libraryTable, @NotNull String libraryName) {
+    Optional.ofNullable(libraryTable.getLibraryByName(libraryName))
+        .ifPresent(libraryTable::removeLibrary);
+  }
 }

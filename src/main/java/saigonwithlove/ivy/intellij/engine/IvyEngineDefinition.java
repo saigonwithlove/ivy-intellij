@@ -19,8 +19,8 @@ public enum IvyEngineDefinition {
   IVY6(
       new DefaultArtifactVersion("6.0.0"),
       Arrays.asList(Ivy6Library.values()),
-      "/lib",
-      "/applications",
+      "lib",
+      "applications/Portal",
       JavaSdkVersion.JDK_1_8) {
     @NotNull
     @Override
@@ -34,42 +34,41 @@ public enum IvyEngineDefinition {
   IVY7(
       new DefaultArtifactVersion("7.0.0"),
       Arrays.asList(Ivy7Library.values()),
-      "/system/configuration/org.eclipse.osgi",
-      "/system/applications",
-      JavaSdkVersion.JDK_1_8) {
-    @NotNull
-    @Override
-    public String getStartCommand() {
-      if (SystemUtils.IS_OS_WINDOWS) {
-        return "/bin/AxonIvyEngine.exe";
-      }
-      return "/bin/AxonIvyEngine";
-    }
-  },
+      "system/configuration/org.eclipse.osgi",
+      "system/applications/Portal",
+      JavaSdkVersion.JDK_1_8),
   IVY8(
       new DefaultArtifactVersion("8.0.0"),
       Arrays.asList(Ivy8Library.values()),
-      "/system/configuration/org.eclipse.osgi",
-      "/system/applications",
-      JavaSdkVersion.JDK_11) {
-    @NotNull
-    @Override
-    public String getStartCommand() {
-      if (SystemUtils.IS_OS_WINDOWS) {
-        return "/bin/AxonIvyEngine.exe";
-      }
-      return "/bin/AxonIvyEngine";
-    }
-  };
+      "system/configuration/org.eclipse.osgi",
+      "work/demo-applications/demo-portal",
+      JavaSdkVersion.JDK_11);
 
-  private ArtifactVersion version;
-  private List<IvyLibrary> libraries;
-  private String libraryDirectory;
-  private String applicationDirectory;
-  private JavaSdkVersion jdkVersion;
+  private final ArtifactVersion version;
+  private final List<IvyLibrary> libraries;
+  private final String osgiDirectory;
+  private final String defaultApplicationDirectory;
+  private final JavaSdkVersion jdkVersion;
 
   @NotNull
-  public abstract String getStartCommand();
+  public String getStartCommand() {
+    if (SystemUtils.IS_OS_WINDOWS) {
+      return "bin/AxonIvyEngine.exe";
+    }
+    return "bin/AxonIvyEngine";
+  }
+
+  /**
+   * @return relative path of Ivy Devtool Process Model Version from ivyEngineDirectory +
+   *     defaultApplicationDirectory + "/" + ivyDevtoolProcessModelVersionPath
+   */
+  public @NotNull String getIvyDevtoolProcessModelVersionPath() {
+    if (this.version.getMajorVersion() < 8) {
+      return "ivy-devtool/1";
+    } else {
+      return "ivy-devtool/1.zip";
+    }
+  }
 
   @NotNull
   public static IvyEngineDefinition fromVersion(@NotNull ArtifactVersion version) {
