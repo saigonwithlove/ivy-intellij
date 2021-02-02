@@ -1,6 +1,6 @@
 plugins {
-  id 'java'
-  id 'org.jetbrains.intellij' version '0.4.9'
+    id 'java'
+    id 'org.jetbrains.intellij' version '0.4.9'
 }
 
 group 'saigonwithlove.ivy'
@@ -9,26 +9,44 @@ version '0.2.0'
 sourceCompatibility = 1.8
 
 repositories {
-  mavenCentral()
+    mavenCentral()
 }
 
 dependencies {
-  compileOnly 'org.projectlombok:lombok:1.18.8'
-  testCompile 'junit:junit:4.12'
-  annotationProcessor 'org.projectlombok:lombok:1.18.8'
-  implementation 'io.reactivex.rxjava3:rxjava:3.0.8'
+    compileOnly 'org.projectlombok:lombok:1.18.8'
+    testCompile 'junit:junit:4.12'
+    annotationProcessor 'org.projectlombok:lombok:1.18.8'
+    implementation 'io.reactivex.rxjava3:rxjava:3.0.8'
 }
 
 // See https://github.com/JetBrains/gradle-intellij-plugin/
 intellij {
-  version '2020.1'
-  plugins 'java'
+    version '2020.1'
+    plugins 'java'
 }
 
 patchPluginXml {
-  sinceBuild '193'
-  untilBuild '201.*'
-  changeNotes """
+    sinceBuild '193'
+    untilBuild '201.*'
+    changeNotes """
+      <h3>v0.2.0 - 2021-02-02</h3>
+      <h4>Added</h4>
+      <ul>
+        <li>Support Ivy 8.</li>
+      </ul>
+      <h4>Changed</h4>
+      <ul>
+        <li>Use RxJava to manage State change.</li>
+        <li>Implement the new way to manage Ivy Engine, the handling for each Ivy version is separated into different classes.</li>
+        <li>Polish InitializationActivity.</li>
+        <li>Clean up old Process Models when creating Ivy Engine, because it may not relevant for existing project.</li>
+      </ul>
+      <h4>Fixed</h4>
+      <ul>
+        <li>Cannot restore Server Properties in State.</li>
+        <li>Make Ivy Engine directory setting fit the width of Setting Panel.</li>
+      </ul>
+
       <h3>v0.1.12 - 2020-05-03</h3>
       <h4>Added</h4>
       <ul>
