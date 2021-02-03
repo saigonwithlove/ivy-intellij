@@ -4,7 +4,7 @@ plugins {
 }
 
 group 'saigonwithlove.ivy'
-version '0.2.0'
+version '0.2.1'
 
 sourceCompatibility = 1.8
 
@@ -26,9 +26,20 @@ intellij {
 }
 
 patchPluginXml {
-    sinceBuild '193'
-    untilBuild '201.*'
+    sinceBuild '201'
+    untilBuild '211.*'
     changeNotes """
+      <h3>v0.2.1 - 2021-02-03</h3>
+      <h4>Changed</h4>
+      <ul>
+        <li>Only support IntelliJ from 2020 and later.</li>
+      </ul>
+
+      <h4>Fixed</h4>
+      <ul>
+        <li>Fixed many compatible issues.</li>
+      </ul>
+
       <h3>v0.2.0 - 2021-02-02</h3>
       <h4>Added</h4>
       <ul>
