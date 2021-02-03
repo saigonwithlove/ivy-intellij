@@ -1,10 +1,15 @@
 package saigonwithlove.ivy.intellij.settings;
 
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.fileChooser.FileChooser;
+import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBPanel;
@@ -61,9 +66,15 @@ public class IvySettingsView implements SearchableConfigurable, Configurable.NoS
     JBLabel engineDirectoryLabel =
         new JBLabel(IvyBundle.message("settings.engine.engineDirectoryLabel"));
     content.add(engineDirectoryLabel, BorderLayout.WEST);
-    // TODO replace deprecated GuiUtils.constructDirectoryBrowserField
     JPanel engineDirectoryPanel =
-        GuiUtils.constructDirectoryBrowserField(engineDirectoryField, "ivyEngineDirectory");
+        GuiUtils.constructFieldWithBrowseButton(engineDirectoryField, ev -> {
+          FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor().withTitle("Select Ivy Engine Directory");
+          VirtualFile file = FileChooser.chooseFile(descriptor, engineDirectoryField, null, null);
+          if (file != null) {
+            engineDirectoryField.setText(FileUtil.toSystemDependentName(file.getPath()));
+            engineDirectoryField.postActionEvent();
+          }
+        });
     engineDirectoryPanel.setPreferredSize(new Dimension(600, 30));
     content.add(engineDirectoryPanel, BorderLayout.CENTER);
 

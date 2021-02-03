@@ -7,6 +7,7 @@ import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessListener;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
+import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -93,22 +94,14 @@ public abstract class BaseIvyEngine implements IvyEngine {
           .toSingle();
     }
 
+    // Common technique was used in JavaScript to hold the "this" reference.
+    IvyEngine self = this;
     GeneralCommandLine commandLine =
         new GeneralCommandLine(this.directory + "/" + this.definition.getStartCommand())
             .withEnvironment("JAVA_HOME", this.getCompatibleJavaHome(definition.getJdkVersion()))
             .withWorkDirectory(this.directory)
             .withParameters("start");
-    ExecutionEnvironment environment =
-        ExecutionEnvironmentBuilder.create(
-                this.project,
-                DefaultRunExecutor.getRunExecutorInstance(),
-                new GeneralRunProfile(commandLine, IvyBundle.message("tasks.runIvyEngine.title")))
-            .executionId(ExecutionEnvironment.getNextUnusedExecutionId())
-            .build();
-
-    // Common technique was used in JavaScript to hold the "this" reference.
-    IvyEngine self = this;
-    environment.setCallback(
+    ProgramRunner.Callback callback =
         descriptor -> {
           ProcessListener ivyEngineProcessListener =
               new ProcessListener() {
@@ -117,6 +110,15 @@ public abstract class BaseIvyEngine implements IvyEngine {
                   port = -1;
                   status = Status.STARTING;
                   LOG.info("Set Ivy Engine status to " + status + " and port to " + port);
+                  ivyEngineSubject.onNext(self);
+                }
+
+                @Override
+                public void processWillTerminate(
+                    @NotNull ProcessEvent event, boolean willBeDestroyed) {
+                  port = -1;
+                  status = Status.STOPPING;
+                  LOG.info("Ivy Engine is " + status);
                   ivyEngineSubject.onNext(self);
                 }
 
@@ -148,7 +150,14 @@ public abstract class BaseIvyEngine implements IvyEngine {
 
           // Set the descriptor for interactive command in stop method.
           this.runContentDescriptor = descriptor;
-        });
+        };
+    ExecutionEnvironment environment =
+        ExecutionEnvironmentBuilder.create(
+                this.project,
+                DefaultRunExecutor.getRunExecutorInstance(),
+                new GeneralRunProfile(commandLine, IvyBundle.message("tasks.runIvyEngine.title")))
+            .executionId(ExecutionEnvironment.getNextUnusedExecutionId())
+            .build(callback);
     environment.getRunner().execute(environment);
     return this.ivyEngineSubject
         .filter(item -> item.getStatus() == Status.RUNNING)
