@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.2.2] - Unreleased
+
+### Fixed
+- Rule Engine classes not found, because the jars is inside a container jar, we need to extract the file "ch.ivyteam.ivy.rule.engine.libs" manually. Only for Axon.ivy Engine 7.0.
+
 ## [v0.2.1] - 2021-02-03
 ### Changed
 - Only support IntelliJ from 2020 and later.
