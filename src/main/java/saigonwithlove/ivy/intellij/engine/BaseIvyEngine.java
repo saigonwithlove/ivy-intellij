@@ -52,7 +52,7 @@ public abstract class BaseIvyEngine implements IvyEngine {
   private static final Logger LOG =
       Logger.getInstance("#" + BaseIvyEngine.class.getCanonicalName());
 
-  private static final Pattern PORT_PATTERN = Pattern.compile(".*http://.*:([0-9]{4})/.*");
+  private static final Pattern PORT_PATTERN = Pattern.compile(".*http://.*:(80[0-9]{2})/(ivy)?.*");
   private static final String READY_TEXT = "Axon.ivy Engine is running and ready to serve";
 
   @Getter private final String directory;
@@ -132,14 +132,20 @@ public abstract class BaseIvyEngine implements IvyEngine {
 
                 @Override
                 public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
-                  Matcher matcher = PORT_PATTERN.matcher(event.getText());
-                  if (matcher.find()) {
-                    int newPort = Integer.parseInt(matcher.group(1));
-                    port = newPort;
-                    LOG.info("Axon.ivy Engine is running on port: " + newPort);
-                    ivyEngineSubject.onNext(self);
+                  String text = event.getText();
+                  // Set Ivy Engine running port.
+                  if (port == -1) {
+                    Matcher matcher = PORT_PATTERN.matcher(text);
+                    if (matcher.find()) {
+                      int newPort = Integer.parseInt(matcher.group(1));
+                      port = newPort;
+                      LOG.info("Axon.ivy Engine is running on port: " + newPort);
+                      ivyEngineSubject.onNext(self);
+                    }
                   }
-                  if (event.getText().startsWith(READY_TEXT)) {
+
+                  // Set Ivy Engine running Status.
+                  if (status == Status.STARTING && text.startsWith(READY_TEXT)) {
                     status = Status.RUNNING;
                     LOG.info("Axon.ivy Engine is " + status);
                     ivyEngineSubject.onNext(self);
