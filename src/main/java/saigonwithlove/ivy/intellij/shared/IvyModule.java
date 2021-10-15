@@ -4,6 +4,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.VirtualFile;
 import java.util.Arrays;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -33,7 +34,11 @@ public class IvyModule {
 
   @NotNull
   public VirtualFile getContentRoot() {
-    return Modules.getContentRoot(module);
+    return Modules.getContentRoot(module)
+        .orElseThrow(
+            () ->
+                new NoSuchElementException(
+                    "Could not find content root of module:" + module.getName()));
   }
 
   @NotNull

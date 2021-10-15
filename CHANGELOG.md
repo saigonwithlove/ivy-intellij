@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Rule Engine classes not found, because the jars is inside a container jar, we need to extract the file "ch.ivyteam.ivy.rule.engine.libs" manually. Only for Axon.ivy Engine 7.0.
+- Index of out bound because we assume all modules have at least one content root. It turned out some Gradle modules don't have it.
 
 ## [v0.2.1] - 2021-02-03
 ### Changed

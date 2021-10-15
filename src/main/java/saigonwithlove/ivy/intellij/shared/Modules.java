@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.vfs.VirtualFile;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.subjects.CompletableSubject;
@@ -28,6 +29,7 @@ import org.apache.maven.model.Model;
 import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
 import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 @UtilityClass
 public class Modules {
@@ -100,12 +102,15 @@ public class Modules {
   }
 
   public static Optional<VirtualFile> getPomFile(@NotNull Module module) {
-    return Optional.ofNullable(Modules.getContentRoot(module).findChild("pom.xml"));
+    return getContentRoot(module).map(root -> root.findChild("pom.xml"));
   }
 
-  @NotNull
-  public static VirtualFile getContentRoot(@NotNull Module module) {
-    return ModuleRootManager.getInstance(module).getContentRoots()[0];
+  public static Optional<VirtualFile> getContentRoot(@NotNull Module module) {
+    VirtualFile[] contentRoots = ModuleRootManager.getInstance(module).getContentRoots();
+    if (contentRoots.length > 0) {
+      return Optional.of(contentRoots[0]);
+    }
+    return Optional.empty();
   }
 
   public static Optional<IvyModule> toIvyModule(@NotNull Module module) {
