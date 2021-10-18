@@ -137,10 +137,10 @@ public class EngineView extends JBPanel<EngineView> {
   private void updateGlobalVariables(
       @NotNull MutableTreeNode globalVariablesRoot,
       @NotNull Map<String, Configuration> globalVariables) {
-    List<Configuration> items = Configurations.buildConfigurations(globalVariables);
-    for (int i = 0; i < globalVariablesRoot.getChildCount(); i++) {
-      globalVariablesRoot.remove(i);
+    while (globalVariablesRoot.getChildCount() > 0) {
+      globalVariablesRoot.remove(globalVariablesRoot.getChildCount() - 1);
     }
+    List<Configuration> items = Configurations.buildConfigurations(globalVariables);
     for (int i = 0; i < items.size(); i++) {
       globalVariablesRoot.insert(new GlobalVariableNode(items.get(i)), i);
     }
@@ -148,10 +148,10 @@ public class EngineView extends JBPanel<EngineView> {
 
   private void updateServerProperties(
       MutableTreeNode serverPropertyRoot, Map<String, Configuration> serverProperties) {
-    List<Configuration> items = Configurations.buildConfigurations(serverProperties);
-    for (int i = 0; i < serverPropertyRoot.getChildCount(); i++) {
-      serverPropertyRoot.remove(i);
+    while (serverPropertyRoot.getChildCount() > 0) {
+      serverPropertyRoot.remove(serverPropertyRoot.getChildCount() - 1);
     }
+    List<Configuration> items = Configurations.buildConfigurations(serverProperties);
     for (int i = 0; i < items.size(); i++) {
       serverPropertyRoot.insert(new ServerPropertyNode(items.get(i)), i);
     }
