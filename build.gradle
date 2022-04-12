@@ -4,7 +4,7 @@ plugins {
 }
 
 group 'saigonwithlove.ivy'
-version '0.2.1'
+version '0.2.2'
 
 sourceCompatibility = 1.8
 
@@ -21,14 +21,20 @@ dependencies {
 
 // See https://github.com/JetBrains/gradle-intellij-plugin/
 intellij {
-    version '2020.1'
+    version '2021.3'
     plugins 'java'
 }
 
 patchPluginXml {
     sinceBuild '201'
-    untilBuild '211.*'
+    untilBuild '213.*'
     changeNotes """
+      <h3>v0.2.2 - 2022-04-12</h3>
+      <h4>Changed</h4>
+      <ul>
+        <li>Support IntelliJ 2021.3.</li>
+      </ul>
+
       <h3>v0.2.1 - 2021-02-03</h3>
       <h4>Changed</h4>
       <ul>
