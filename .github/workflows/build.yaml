@@ -13,4 +13,9 @@ jobs:
         with:
           gradle-version: "6.1"
       - run: "bash ./scripts/build.sh"
+      - uses: "pyTooling/Actions/releaser@r0"
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          tag: "snapshot"
+          files: "build/distributions/ivy-intellij-*.zip"
 
