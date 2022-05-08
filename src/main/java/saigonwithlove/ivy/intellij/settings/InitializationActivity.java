@@ -39,8 +39,7 @@ public class InitializationActivity implements StartupActivity {
 
   @Override
   public void runActivity(@NotNull Project project) {
-    PreferenceService preferenceService =
-        ServiceManager.getService(project, PreferenceService.class);
+    PreferenceService preferenceService = project.getService(PreferenceService.class);
 
     LOG.info("subscribe to create Ivy Engine according to changed Ivy Engine Directory.");
     preferenceService

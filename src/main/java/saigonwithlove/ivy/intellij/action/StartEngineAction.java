@@ -30,7 +30,7 @@ public class StartEngineAction extends AnAction {
         IvyBundle.message("toolWindow.actions.startEngine.description"),
         AllIcons.Actions.Execute);
     this.project = project;
-    this.preferenceService = ServiceManager.getService(project, PreferenceService.class);
+    this.preferenceService = project.getService(PreferenceService.class);
   }
 
   @Override
@@ -53,26 +53,27 @@ public class StartEngineAction extends AnAction {
     ivyEngine
         .start()
         .timeout(120, TimeUnit.SECONDS)
-        .doOnSuccess(
-            item -> {
-              LOG.info("Deploy all modules.");
-              preferenceService.getState().getIvyModules().stream()
-                  .filter(item::isIvyModuleNotDeployed)
-                  .forEach(item::deployIvyModule);
-            })
-        .doOnSuccess(
-            item -> {
-              LOG.info("Update global variables.");
-              Map<String, Configuration> globalVariables =
-                  preferenceService.getState().getGlobalVariables();
-              globalVariables.values().stream()
-                  .filter(Configuration::isModified)
-                  .forEach(item::updateGlobalVariable);
-            })
+        // TODO sort modules based on dependencies to deploy successfully.
+        //        .doOnSuccess(
+        //            item -> {
+        //              LOG.info("Deploy all modules.");
+        //              preferenceService.getState().getIvyModules().stream()
+        //                  .filter(item::isIvyModuleNotDeployed)
+        //                  .forEach(item::deployIvyModule);
+        //            })
+        //        .doOnSuccess(
+        //            item -> {
+        //              LOG.info("Update global variables.");
+        //              Map<String, Configuration> globalVariables =
+        //                  preferenceService.getState().getGlobalVariables();
+        //              globalVariables.values().stream()
+        //                  .filter(Configuration::isModified)
+        //                  .forEach(item::updateGlobalVariable);
+        //            })
         .subscribe(
             item -> {
               LOG.info("Update server properties.");
-              // TODO Ivy Engine should be then entry point for updating server properties.
+              // TODO Ivy Engine should have entry point for updating server properties.
               Map<String, Configuration> storedServerProperties =
                   preferenceService.getState().getServerProperties();
               Map<String, Configuration> serverProperties = item.getServerProperties();

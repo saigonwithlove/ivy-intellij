@@ -1,7 +1,7 @@
 package saigonwithlove.ivy.intellij.shared;
 
-import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationGroup;
+import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.project.Project;
@@ -10,8 +10,8 @@ import org.jetbrains.annotations.NotNull;
 
 @UtilityClass
 public class Notifier {
-  private static final NotificationGroup GROUP =
-      new NotificationGroup("Ivy", NotificationDisplayType.BALLOON, true);
+  private static final NotificationGroup GROUP = NotificationGroupManager.getInstance()
+      .getNotificationGroup("Ivy");
 
   public static void info(@NotNull Project project, @NotNull String content) {
     GROUP.createNotification(content, NotificationType.INFORMATION).notify(project);

@@ -33,6 +33,6 @@ public class IvyToolWindowFactory implements ToolWindowFactory {
 
   @Override
   public boolean isApplicable(@NotNull Project project) {
-    return ServiceManager.getService(project, PreferenceService.class).getState().isPluginEnabled();
+    return project.getService(PreferenceService.class).getState().isPluginEnabled();
   }
 }

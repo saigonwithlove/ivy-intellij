@@ -29,7 +29,7 @@ public class DeployModuleAction extends AnAction {
         IvyBundle.message("toolWindow.actions.deployModule.description"),
         AllIcons.Nodes.Deploy);
     this.project = project;
-    this.preferenceService = ServiceManager.getService(project, PreferenceService.class);
+    this.preferenceService = project.getService(PreferenceService.class);
     this.modules = modules;
   }
 

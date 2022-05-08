@@ -42,7 +42,7 @@ public class EngineView extends JBPanel<EngineView> {
   @NotNull
   private JComponent newContent(@NotNull Project project) {
     PreferenceService preferenceService =
-        ServiceManager.getService(project, PreferenceService.class);
+        project.getService(PreferenceService.class);
 
     // Root wrapper for content
     JBPanel panel = new JBPanel(new GridBagLayout());

@@ -31,7 +31,7 @@ public class IvySettingsView implements SearchableConfigurable, Configurable.NoS
   private final JBTextField engineDirectoryField;
 
   public IvySettingsView(@NotNull Project project) {
-    this.preferenceService = ServiceManager.getService(project, PreferenceService.class);
+    this.preferenceService = project.getService(PreferenceService.class);
     this.engineDirectoryField = new JBTextField();
   }
 

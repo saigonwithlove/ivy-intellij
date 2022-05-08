@@ -4,7 +4,7 @@ plugins {
 }
 
 group 'saigonwithlove.ivy'
-version '0.2.2'
+version '0.2.3'
 
 sourceCompatibility = 1.8
 
@@ -26,9 +26,15 @@ intellij {
 }
 
 patchPluginXml {
-    sinceBuild '201'
-    untilBuild '213.*'
+    sinceBuild '213'
+    untilBuild '221.*'
     changeNotes """
+      <h3>v0.2.3 - 2022-04-15</h3>
+      <h4>Changed</h4>
+      <ul>
+        <li>Support IntelliJ 2022.1.</li>
+      </ul>
+
       <h3>v0.2.2 - 2022-04-12</h3>
       <h4>Changed</h4>
       <ul>

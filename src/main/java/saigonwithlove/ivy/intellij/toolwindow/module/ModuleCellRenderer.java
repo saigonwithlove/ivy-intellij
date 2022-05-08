@@ -25,7 +25,7 @@ public class ModuleCellRenderer extends ColoredListCellRenderer<IvyModule> {
 
   public ModuleCellRenderer(@NotNull Project project) {
     this.project = project;
-    this.preferenceService = ServiceManager.getService(project, PreferenceService.class);
+    this.preferenceService = project.getService(PreferenceService.class);
   }
 
   @Override

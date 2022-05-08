@@ -15,6 +15,7 @@
     <projectConfigurable instance="saigonwithlove.ivy.intellij.settings.IvySettingsView"/>
     <toolWindow id="Ivy" icon="/icons/ivyToolWindow.svg" anchor="bottom"
                 factoryClass="saigonwithlove.ivy.intellij.toolwindow.IvyToolWindowFactory"/>
+    <notificationGroup id="Ivy" displayType="BALLOON" />
   </extensions>
 
   <actions>

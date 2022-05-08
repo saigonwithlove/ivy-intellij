@@ -23,7 +23,7 @@ public class EditServerPropertyListener extends MouseAdapter {
   public EditServerPropertyListener(@NotNull Project project, @NotNull Tree tree) {
     this.project = project;
     this.tree = tree;
-    this.preferenceService = ServiceManager.getService(project, PreferenceService.class);
+    this.preferenceService = project.getService(PreferenceService.class);
   }
 
   @Override

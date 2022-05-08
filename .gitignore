@@ -10,3 +10,4 @@ ivy-intellij.iws
 ivy-intellij.main.iml
 ivy-intellij.test.iml
 out
+java_pid*.hprof

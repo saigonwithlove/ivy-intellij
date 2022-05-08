@@ -36,7 +36,7 @@ public class ModuleView extends JBPanel<ModuleView> {
   private JComponent newContent(@NotNull Project project, @NotNull JBList<IvyModule> modules) {
     JBPanel panel = new JBPanel(new GridBagLayout());
     PreferenceService preferenceService =
-        ServiceManager.getService(project, PreferenceService.class);
+        project.getService(PreferenceService.class);
     PreferenceService.State state = preferenceService.getState();
     CollectionListModel<IvyModule> model = new CollectionListModel<>(state.getIvyModules());
     preferenceService
