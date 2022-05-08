@@ -1,3 +1,12 @@
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'com.guardsquare:proguard-gradle:7.2.1'
+    }
+}
+
 plugins {
     id 'java'
     id 'org.jetbrains.intellij' version '0.4.9'
@@ -16,13 +25,30 @@ dependencies {
     compileOnly 'org.projectlombok:lombok:1.18.8'
     testCompile 'junit:junit:4.12'
     annotationProcessor 'org.projectlombok:lombok:1.18.8'
-    implementation 'io.reactivex.rxjava3:rxjava:3.0.8'
+    implementation 'io.reactivex.rxjava3:rxjava:3.1.4'
 }
 
 // See https://github.com/JetBrains/gradle-intellij-plugin/
 intellij {
     version '2021.3'
     plugins 'java'
+}
+
+task proGuard(type: proguard.gradle.ProGuardTask) {
+    injars "build/distributions/ivy-intellij-${project.version}.zip"
+    outjars "build/distributions/ivy-intellij-${project.version}_optimized.zip"
+    // It seems RxJava3 required JDK8's rt.jar to process.
+    libraryjars '.gradle/java/jdk8u332-b09-jre/lib/rt.jar'
+    libraryjars configurations.compileClasspath
+    target '11'
+    keep includedescriptorclasses: true, 'public class saigonwithlove.** { *; }'
+    dontobfuscate
+    dontwarn
+}
+
+task showMeCache doLast() {
+    configurations.compileClasspath.each { println it }
+    println project.version
 }
 
 patchPluginXml {

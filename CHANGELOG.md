@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Support IntelliJ from 2021.3 to 2022.1.
 - Remove deprecated API calls.
+- Use ProGuard to optimize distribution size.
 
 ## [v0.2.2] - 2022-04-12
 ### Changed
