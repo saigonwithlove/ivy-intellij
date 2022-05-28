@@ -2,6 +2,7 @@ name: "build"
 on: [ "push" ]
 jobs:
   build-ivy-intellij:
+    name: "Build Ivy Intellij Plugin"
     runs-on: "ubuntu-20.04"
     steps:
       - uses: "actions/checkout@v3"
@@ -13,9 +14,13 @@ jobs:
         with:
           gradle-version: "6.1"
       - run: "bash ./scripts/build.sh"
+  create-snapshot-release:
+    name: "Create SNAPSHOT Release"
+    runs-on: "ubuntu-20.04"
+    if: "github.ref == 'refs/heads/master'"
+    steps:
       - uses: "pyTooling/Actions/releaser@r0"
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           tag: "snapshot"
           files: "build/distributions/ivy-intellij-*.zip"
-
