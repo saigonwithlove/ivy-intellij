@@ -34,6 +34,8 @@ import org.jetbrains.annotations.Nullable;
 @UtilityClass
 public class Modules {
   public static final Comparator<Module> MODULE_COMPARATOR = createModuleComparator();
+  public static final Comparator<IvyModule> DEPLOY_ORDER_COMPARATOR =
+      createIvyModuleDeployOrderComparator();
 
   private static final Logger LOG = Logger.getInstance("#" + Modules.class.getCanonicalName());
   private static final String IVY_PACKAGE_EXTENSION = "iar";
@@ -61,6 +63,18 @@ public class Modules {
   private static Comparator<Module> createModuleComparator() {
     return (@NotNull Module a, @NotNull Module b) ->
         Collator.getInstance().compare(a.getName(), b.getName());
+  }
+
+  private static Comparator<IvyModule> createIvyModuleDeployOrderComparator() {
+    return (@NotNull IvyModule a, @NotNull IvyModule b) -> {
+      boolean isDependOnA =
+          b.getMavenModel().getDependencies().stream()
+              .noneMatch(dependency -> resolveDependency(dependency).test(a));
+      if (isDependOnA) {
+        return 1;
+      }
+      return 0;
+    };
   }
 
   @NotNull

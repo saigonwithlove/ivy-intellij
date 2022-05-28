@@ -15,6 +15,7 @@ import saigonwithlove.ivy.intellij.engine.IvyEngine;
 import saigonwithlove.ivy.intellij.settings.PreferenceService;
 import saigonwithlove.ivy.intellij.shared.Configuration;
 import saigonwithlove.ivy.intellij.shared.IvyBundle;
+import saigonwithlove.ivy.intellij.shared.Modules;
 import saigonwithlove.ivy.intellij.shared.Notifier;
 
 public class StartEngineAction extends AnAction {
@@ -53,23 +54,23 @@ public class StartEngineAction extends AnAction {
     ivyEngine
         .start()
         .timeout(120, TimeUnit.SECONDS)
-        // TODO sort modules based on dependencies to deploy successfully.
-        //        .doOnSuccess(
-        //            item -> {
-        //              LOG.info("Deploy all modules.");
-        //              preferenceService.getState().getIvyModules().stream()
-        //                  .filter(item::isIvyModuleNotDeployed)
-        //                  .forEach(item::deployIvyModule);
-        //            })
-        //        .doOnSuccess(
-        //            item -> {
-        //              LOG.info("Update global variables.");
-        //              Map<String, Configuration> globalVariables =
-        //                  preferenceService.getState().getGlobalVariables();
-        //              globalVariables.values().stream()
-        //                  .filter(Configuration::isModified)
-        //                  .forEach(item::updateGlobalVariable);
-        //            })
+        .doOnSuccess(
+            item -> {
+              LOG.info("Deploy all modules.");
+              preferenceService.getState().getIvyModules().stream()
+                  .sorted(Modules.DEPLOY_ORDER_COMPARATOR)
+                  .filter(item::isIvyModuleNotDeployed)
+                  .forEach(item::deployIvyModule);
+            })
+        .doOnSuccess(
+            item -> {
+              LOG.info("Update global variables.");
+              Map<String, Configuration> globalVariables =
+                  preferenceService.getState().getGlobalVariables();
+              globalVariables.values().stream()
+                  .filter(Configuration::isModified)
+                  .forEach(item::updateGlobalVariable);
+            })
         .subscribe(
             item -> {
               LOG.info("Update server properties.");
