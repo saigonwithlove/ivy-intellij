@@ -14,12 +14,20 @@ jobs:
         with:
           gradle-version: "6.1"
       - run: "bash ./scripts/build.sh"
+      - uses: "actions/upload-artifact@v3"
+        with:
+          name: "distribution-packages"
+          path: "build/distributions/ivy-intellij-*.zip"
   create-snapshot-release:
     name: "Create SNAPSHOT Release"
     needs: "build-ivy-intellij"
     runs-on: "ubuntu-20.04"
     if: "github.ref == 'refs/heads/master'"
     steps:
+      - uses: "actions/download-artifact@v3"
+        with:
+          name: "distribution-packages"
+          path: "build/distributions"
       - uses: "pyTooling/Actions/releaser@r0"
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
