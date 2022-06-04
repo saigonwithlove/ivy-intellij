@@ -13,7 +13,8 @@ jobs:
       - uses: "gradle/gradle-build-action@v2"
         with:
           gradle-version: "6.1"
-      - run: "bash ./scripts/build.sh"
+      - run: "bash ./scripts/setup-jre8.sh"
+      - run: "gradle buildPlugin proGuard --no-daemon"
       - uses: "actions/upload-artifact@v3"
         with:
           name: "distribution-packages"
