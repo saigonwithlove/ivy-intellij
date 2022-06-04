@@ -67,13 +67,15 @@ public class Modules {
 
   private static Comparator<IvyModule> createIvyModuleDeployOrderComparator() {
     return (@NotNull IvyModule a, @NotNull IvyModule b) -> {
+      // The module B depends on module A if A is a dependency of B. In this
+      // case, we will put A before B by returning positive value.
       boolean isDependOnA =
           b.getMavenModel().getDependencies().stream()
-              .noneMatch(dependency -> resolveDependency(dependency).test(a));
+              .anyMatch(dependency -> resolveDependency(dependency).test(a));
       if (isDependOnA) {
         return 1;
       }
-      return 0;
+      return -1;
     };
   }
 

@@ -55,10 +55,17 @@ patchPluginXml {
     sinceBuild '213'
     untilBuild '221.*'
     changeNotes """
-      <h3>v0.2.3 - 2022-04-15</h3>
+      <h3>v0.2.3 - Unreleased</h3>
+      <h4>Added</h4>
+      <ul>
+        <li>Sort the modules for deployment based on their dependencies.</li>
+        <li>Use ProGuard to optimize distribution size.</li>
+      </ul>
+
       <h4>Changed</h4>
       <ul>
-        <li>Support IntelliJ 2022.1.</li>
+        <li>Support IntelliJ from 2021.3 to 2022.1.</li>
+        <li>Remove deprecated API calls.</li>
       </ul>
 
       <h3>v0.2.2 - 2022-04-12</h3>

@@ -60,7 +60,10 @@ public class StartEngineAction extends AnAction {
               preferenceService.getState().getIvyModules().stream()
                   .sorted(Modules.DEPLOY_ORDER_COMPARATOR)
                   .filter(item::isIvyModuleNotDeployed)
-                  .forEach(item::deployIvyModule);
+                  .forEach(ivyModule -> {
+                    LOG.info("Deploy module: " + ivyModule.getName());
+                    item.deployIvyModule(ivyModule);
+                  });
             })
         .doOnSuccess(
             item -> {
@@ -100,5 +103,6 @@ public class StartEngineAction extends AnAction {
                   .forEach(item::updateServerProperty);
             },
             ex -> LOG.error("Could not get the Status.RUNNING after starting Ivy Engine.", ex));
+    // TODO should send notification when deployment completed.
   }
 }
