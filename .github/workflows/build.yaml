@@ -16,6 +16,7 @@ jobs:
       - run: "bash ./scripts/build.sh"
   create-snapshot-release:
     name: "Create SNAPSHOT Release"
+    needs: "build-ivy-intellij"
     runs-on: "ubuntu-20.04"
     if: "github.ref == 'refs/heads/master'"
     steps:
