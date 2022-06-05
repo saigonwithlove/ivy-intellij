@@ -9,7 +9,7 @@ buildscript {
 
 plugins {
     id 'java'
-    id 'org.jetbrains.intellij' version '0.4.9'
+    id 'org.jetbrains.intellij' version '1.6.0'
 }
 
 group 'saigonwithlove.ivy'
@@ -23,15 +23,15 @@ repositories {
 
 dependencies {
     compileOnly 'org.projectlombok:lombok:1.18.8'
-    testCompile 'junit:junit:4.12'
+    testImplementation 'junit:junit:4.12'
     annotationProcessor 'org.projectlombok:lombok:1.18.8'
     implementation 'io.reactivex.rxjava3:rxjava:3.1.4'
 }
 
 // See https://github.com/JetBrains/gradle-intellij-plugin/
 intellij {
-    version '2021.3'
-    plugins 'java'
+    version = '2021.3'
+    plugins = ['com.intellij.java']
 }
 
 task proGuard(type: proguard.gradle.ProGuardTask) {
@@ -44,108 +44,4 @@ task proGuard(type: proguard.gradle.ProGuardTask) {
     keep includedescriptorclasses: true, 'public class saigonwithlove.** { *; }'
     dontobfuscate
     dontwarn
-}
-
-task showMeCache doLast() {
-    configurations.compileClasspath.each { println it }
-    println project.version
-}
-
-patchPluginXml {
-    sinceBuild '213'
-    untilBuild '221.*'
-    changeNotes """
-      <h3>v0.2.3 - Unreleased</h3>
-      <h4>Added</h4>
-      <ul>
-        <li>Sort the modules for deployment based on their dependencies.</li>
-        <li>Use ProGuard to optimize distribution size.</li>
-      </ul>
-
-      <h4>Changed</h4>
-      <ul>
-        <li>Support IntelliJ from 2021.3 to 2022.1.</li>
-        <li>Remove deprecated API calls.</li>
-      </ul>
-
-      <h3>v0.2.2 - 2022-04-12</h3>
-      <h4>Changed</h4>
-      <ul>
-        <li>Support IntelliJ 2021.3.</li>
-      </ul>
-
-      <h3>v0.2.1 - 2021-02-03</h3>
-      <h4>Changed</h4>
-      <ul>
-        <li>Only support IntelliJ from 2020 and later.</li>
-      </ul>
-
-      <h4>Fixed</h4>
-      <ul>
-        <li>Fixed many compatible issues.</li>
-      </ul>
-
-      <h3>v0.2.0 - 2021-02-02</h3>
-      <h4>Added</h4>
-      <ul>
-        <li>Support Ivy 8.</li>
-      </ul>
-      <h4>Changed</h4>
-      <ul>
-        <li>Use RxJava to manage State change.</li>
-        <li>Implement the new way to manage Ivy Engine, the handling for each Ivy version is separated into different classes.</li>
-        <li>Polish InitializationActivity.</li>
-        <li>Clean up old Process Models when creating Ivy Engine, because it may not relevant for existing project.</li>
-      </ul>
-      <h4>Fixed</h4>
-      <ul>
-        <li>Cannot restore Server Properties in State.</li>
-        <li>Make Ivy Engine directory setting fit the width of Setting Panel.</li>
-      </ul>
-
-      <h3>v0.1.12 - 2020-05-03</h3>
-      <h4>Added</h4>
-      <ul>
-        <li>Added Server Properties in Engine View.</li>
-        <li>Download and update Ivy Devtool automatically.</li>
-        <li>Show different color between default and modified configuration.</li>
-      </ul>
-      <h4>Changed</h4>
-      <ul>
-        <li>Support IntelliJ 2020.1, since v0.1.12 the IntelliJ version part is removed. Ivy Plugin supports IntelliJ 2019.3 and later.</li>
-        <li>Use one observable to handle setting changes.</li>
-        <li>Internal code clean up.</li>
-      </ul>
-
-      <h3>v0.1.11-2019.3 - 2020-04-09</h3>
-      <h4>Changed</h4>
-      <ul>
-        <li>Re-create Ivy's Global Libraries to prevent wrong libraries were created and stay forever.</li>
-      </ul>
-      <h4>Fixed</h4>
-      <ul>
-        <li>Global Variables are not displayed when Ivy Tool Window was not opened at the beginning.</li>
-        <li>Deployed module directories were cached lead to wrong deployment detection.</li>
-        <li>Ivy Modules's version and dependencies are not get updated when pom.xml had been changed.</li>
-        <li>NullPointerException when checking Ivy Devtool exists in InitializationActivity.</li>
-        <li>Jar files were not updated in Virtual File System, lead to Global Libraries were not created correctly.</li>
-      </ul>
-
-      <h3>v0.1.10-2019.3 - 2020-04-04</h3>
-      <h4>Added</h4>
-      <ul>
-        <li>CHANGELOG.md to keep track changes.</li>
-        <li>EngineView with ability to change Global Variable's value.</li>
-        <li>Deploy modules which are not exist in Axon.ivy Engine when Axon.ivy Engine started.</li>
-        <li>Update modified Global Variables in Axon.ivy Engine when Axon.ivy Engine started (because the old data was lost when Axon.ivy Engine stopped, we need to restore the modified values).</li>
-      </ul>
-      <h4>Changed</h4>
-      <ul>
-        <li>Ignore <b>.git</b>, <b>target</b>, <b>node_modules</b> when deploy module to Axon.ivy Engine.</li>
-        <li>Logic/Workflow could be deployed without restart Axon.ivy Engine, with the help of <b>ivy-devtool-0.2.2</b>.</li>
-        <li>Refine border and size of ModuleView for consistent background in Bright theme.</li>
-        <li>Reduce startup time by skipping created libraries.</li>
-        <li>Start Engine and Config Actions moved from ModuleView to EngineView.</li>
-      </ul>
-      """
 }

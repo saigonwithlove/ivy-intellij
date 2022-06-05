@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Support IntelliJ from 2021.3 to 2022.1.
 - Remove deprecated API calls.
+- Update Gradle to version 7.4.2.
+- Update gradle-intellij-plugin to version 1.6.0.
 
 ## [v0.2.2] - 2022-04-12
 ### Changed
