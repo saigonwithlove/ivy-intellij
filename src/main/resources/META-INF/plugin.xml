@@ -3,9 +3,6 @@
   <name>Ivy</name>
   <vendor email="cavoirom@gmail.com" url="https://github.com/saigonwithlove">Saigon with love</vendor>
 
-  <!-- Minimum and maximum IDE build versions compatible with the plugin. -->
-  <idea-version since-build="213" until-build="221.*"/>
-
   <description><![CDATA[
     Unofficial Axon.ivy Framework Plugin for Ivy development on IntelliJ.
     ]]></description>

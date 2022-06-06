@@ -32,6 +32,12 @@ dependencies {
 intellij {
     version = '2021.3'
     plugins = ['com.intellij.java']
+    updateSinceUntilBuild = true
+}
+
+patchPluginXml {
+    sinceBuild = '213'
+    untilBuild = '221.*'
 }
 
 task proGuard(type: proguard.gradle.ProGuardTask) {
