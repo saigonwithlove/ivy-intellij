@@ -37,7 +37,7 @@ intellij {
 
 patchPluginXml {
     sinceBuild = '213'
-    untilBuild = '221.*'
+    untilBuild = '222.*'
 }
 
 task proGuard(type: proguard.gradle.ProGuardTask) {
