@@ -52,10 +52,9 @@ public class UpdateGlobalVariablesAndServerPropertiesAction extends AnAction {
                         .preferenceService
                         .getState()
                         .getIvyEngine();
-                if (Objects.isNull(ivyEngine) || ivyEngine.getStatus() != IvyEngine.Status.RUNNING) {
-                  Notifier.info(
-                      project,
-                      IvyBundle.message("notification.ivyEngineStopped"));
+                if (Objects.isNull(ivyEngine)
+                    || ivyEngine.getStatus() != IvyEngine.Status.RUNNING) {
+                  Notifier.info(project, IvyBundle.message("notification.ivyEngineStopped"));
                   return;
                 }
 

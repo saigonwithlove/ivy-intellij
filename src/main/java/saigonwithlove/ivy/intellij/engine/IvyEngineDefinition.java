@@ -26,9 +26,9 @@ public enum IvyEngineDefinition {
     @Override
     public String getStartCommand() {
       if (SystemUtils.IS_OS_WINDOWS) {
-        return "/bin/AxonIvyEngine.exe";
+        return "bin/AxonIvyEngine.exe";
       }
-      return "/bin/AxonIvyEngine.sh";
+      return "bin/AxonIvyEngine.sh";
     }
   },
   IVY7(

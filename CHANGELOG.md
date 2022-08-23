@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Unstable deployment on starting Engine.
+- Support Axon.ivy Engine 6.3.0:
+  - Provide built-in libraries.
 
 ## v0.2.6 - 2023-08-14
 ### Changed

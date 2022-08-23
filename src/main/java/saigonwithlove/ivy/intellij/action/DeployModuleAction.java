@@ -42,9 +42,7 @@ public class DeployModuleAction extends AnAction {
 
     IvyEngine ivyEngine = preferenceService.getState().getIvyEngine();
     if (Objects.isNull(ivyEngine) || ivyEngine.getStatus() != IvyEngine.Status.RUNNING) {
-      Notifier.info(
-          project,
-          IvyBundle.message("notification.ivyEngineStopped"));
+      Notifier.info(project, IvyBundle.message("notification.ivyEngineStopped"));
       return;
     }
 
