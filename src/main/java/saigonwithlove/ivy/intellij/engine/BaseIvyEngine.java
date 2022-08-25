@@ -147,7 +147,10 @@ public abstract class BaseIvyEngine implements IvyEngine {
                   }
 
                   // Set Ivy Engine running Status.
-                  if (status == Status.STARTING && text.startsWith(READY_TEXT)) {
+                  // Axon.ivy 7 and 8 start with READY_TEXT.
+                  // Axon.ivy 6 have indentation or a dot in the end, lead to missing READ_TEXT.
+                  // That's why we use contains(...).
+                  if (status == Status.STARTING && text.contains(READY_TEXT)) {
                     status = Status.RUNNING;
                     LOG.info("Axon.ivy Engine is " + status);
                     ivyEngineSubject.onNext(self);
