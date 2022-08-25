@@ -25,8 +25,11 @@ import java.util.zip.ZipInputStream;
 import lombok.experimental.UtilityClass;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
-import org.apache.http.client.fluent.Request;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.utils.URIBuilder;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
 import org.apache.maven.artifact.versioning.InvalidVersionSpecificationException;
 import org.apache.maven.artifact.versioning.VersionRange;
@@ -137,8 +140,14 @@ public class IvyDevtools {
               .addParameter("pm", processModelName)
               .addParameter("pmv", "1")
               .build();
-
-      Request.Get(reloadModuleUri).execute().returnContent();
+      HttpClient client = HttpClientBuilder.create().build();
+      int responseStatus =
+          client.execute(new HttpGet(reloadModuleUri)).getStatusLine().getStatusCode();
+      if (responseStatus != 200) {
+        throw new RuntimeException(
+            MessageFormat.format(
+                "Could not reload module: {0}. Server return error.", processModelName));
+      }
     } catch (URISyntaxException ex) {
       throw new IllegalArgumentException(ex);
     } catch (IOException ex) {
@@ -183,7 +192,15 @@ public class IvyDevtools {
               .addParameter("name", configuration.getName())
               .addParameter("value", configuration.getValue())
               .build();
-      Request.Get(setServerPropertyUri).execute().returnContent();
+      HttpClient client = HttpClientBuilder.create().build();
+      int responseStatus =
+          client.execute(new HttpGet(setServerPropertyUri)).getStatusLine().getStatusCode();
+      if (responseStatus != 200) {
+        throw new RuntimeException(
+            MessageFormat.format(
+                "Could not set Server Property: {0}. Server return error.",
+                configuration.getName()));
+      }
     } catch (URISyntaxException ex) {
       throw new IllegalArgumentException(ex);
     } catch (IOException ex) {
@@ -212,7 +229,15 @@ public class IvyDevtools {
               .addParameter("name", configuration.getName())
               .addParameter("value", configuration.getValue())
               .build();
-      Request.Get(setGlobalVariableUri).execute().returnContent();
+      HttpClient client = HttpClientBuilder.create().build();
+      int responseStatus =
+          client.execute(new HttpGet(setGlobalVariableUri)).getStatusLine().getStatusCode();
+      if (responseStatus != 200) {
+        throw new RuntimeException(
+            MessageFormat.format(
+                "Could not set Global Variable: {0}. Server return error.",
+                configuration.getName()));
+      }
     } catch (URISyntaxException ex) {
       throw new IllegalArgumentException(ex);
     } catch (IOException ex) {
@@ -227,17 +252,20 @@ public class IvyDevtools {
               .getUrl()
               .map(String::valueOf)
               .orElseThrow(() -> new NoSuchElementException("Could not get URL of Ivy Engine."));
-      URI setServerPropertyUri =
+      URI getServerPropertiesUri =
           new URIBuilder(baseIvyEngineUrl + getIvyDevtoolUrl(ivyEngine))
               .addParameter("command", "server-property$get-all")
               .build();
 
+      HttpClient client = HttpClientBuilder.create().build();
+      HttpResponse response = client.execute(new HttpGet(getServerPropertiesUri));
+      int responseStatus = response.getStatusLine().getStatusCode();
+      if (responseStatus != 200) {
+        throw new RuntimeException("Could not get Server Properties. Server return error.");
+      }
       Map<String, String> rawServerProperties =
           (Map<String, String>)
-              new ObjectMapper()
-                  .readValue(
-                      Request.Get(setServerPropertyUri).execute().returnContent().asStream(),
-                      Map.class);
+              new ObjectMapper().readValue(response.getEntity().getContent(), Map.class);
       return rawServerProperties.entrySet().stream()
           .collect(
               Collectors.toMap(
