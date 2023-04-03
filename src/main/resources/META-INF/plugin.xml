@@ -9,6 +9,10 @@
 
   <depends>com.intellij.modules.java</depends>
 
+  <projectListeners>
+    <listener class="saigonwithlove.ivy.intellij.settings.IvyModuleListener" topic="com.intellij.openapi.project.ModuleListener"/>
+  </projectListeners>
+  
   <extensions defaultExtensionNs="com.intellij">
     <postStartupActivity implementation="saigonwithlove.ivy.intellij.settings.InitializationActivity"/>
     <projectService serviceImplementation="saigonwithlove.ivy.intellij.settings.PreferenceService"/>
