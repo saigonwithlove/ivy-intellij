@@ -13,7 +13,7 @@ plugins {
 }
 
 group 'saigonwithlove.ivy'
-version '0.2.4'
+version '0.2.5'
 
 sourceCompatibility = 1.8
 
@@ -37,7 +37,7 @@ intellij {
 
 patchPluginXml {
     sinceBuild = '213'
-    untilBuild = '223.*'
+    untilBuild = '231.*'
 }
 
 task proGuard(type: proguard.gradle.ProGuardTask) {
