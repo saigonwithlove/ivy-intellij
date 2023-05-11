@@ -27,10 +27,17 @@
   </actions>
 
   <change-notes><![CDATA[
-    <h3>v0.2.5 - 2023-05-10</h3>
+    <h3>v0.2.5 - 2023-05-11</h3>
     <h4>Changed</h4>
     <ul>
       <li>Support IntelliJ from 2021.3 to 2023.1.</li>
+    </ul>
+
+    <h4>Fixed</h4>
+    <ul>
+      <li>Support IntelliJ from 2021.3 to 2023.1.</li>
+      <li>Fixed AlreadyDisposedException when an Ivy Module is removed from the workspace.</li>
+      <li>Fixed newly added Ivy Module didn't show on the list of Ivy Modules.</li>
     </ul>
 
     <h3>v0.2.4 - 2023-03-30</h3>
