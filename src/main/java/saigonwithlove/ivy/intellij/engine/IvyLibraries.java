@@ -18,7 +18,6 @@ import org.codehaus.plexus.util.DirectoryScanner;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.io.LocalFileFinder;
-import sun.tools.jar.resources.jar;
 
 @UtilityClass
 public class IvyLibraries {
