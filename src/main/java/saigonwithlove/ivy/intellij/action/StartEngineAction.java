@@ -7,14 +7,18 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import java.text.MessageFormat;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import saigonwithlove.ivy.intellij.engine.IvyEngine;
 import saigonwithlove.ivy.intellij.settings.PreferenceService;
 import saigonwithlove.ivy.intellij.shared.Configuration;
 import saigonwithlove.ivy.intellij.shared.IvyBundle;
+import saigonwithlove.ivy.intellij.shared.IvyModule;
 import saigonwithlove.ivy.intellij.shared.Modules;
 import saigonwithlove.ivy.intellij.shared.Notifier;
 
@@ -57,9 +61,14 @@ public class StartEngineAction extends AnAction {
         .doOnSuccess(
             item -> {
               LOG.info("Deploy all modules.");
-              preferenceService.getState().getIvyModules().stream()
-                  .sorted(Modules.DEPLOY_ORDER_COMPARATOR)
-                  .filter(item::isIvyModuleNotDeployed)
+              List<IvyModule> ivyModules = preferenceService.getState().getIvyModules();
+              Comparator<IvyModule> deployOrderComparator = Modules.createIvyModuleDeployOrderComparator(ivyModules);
+              List<IvyModule> sortedIvyModules = ivyModules.stream()
+                  .sorted(deployOrderComparator)
+                  .collect(Collectors.toList());
+              sortedIvyModules.forEach(i -> LOG.info(i.getName()));
+              // TODO: filter deployed modules.
+              sortedIvyModules
                   .forEach(ivyModule -> {
                     LOG.info("Deploy module: " + ivyModule.getName());
                     item.deployIvyModule(ivyModule);

@@ -19,8 +19,10 @@ import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Observer;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.functions.Predicate;
 import io.reactivex.rxjava3.subjects.BehaviorSubject;
 import io.reactivex.rxjava3.subjects.Subject;
 import java.io.PrintWriter;
@@ -32,6 +34,7 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -205,6 +208,13 @@ public abstract class BaseIvyEngine implements IvyEngine {
   @Override
   public void deployIvyModule(@NotNull IvyModule ivyModule) {
     IvyDevtools.deployIvyModule(this, ivyModule);
+    Flowable.range(0, 30)
+        .delay(1, TimeUnit.SECONDS)
+        .map(item -> IvyDevtools.getModuleStatus(this, ivyModule.getName()))
+        .takeUntil(item -> {
+          return "ACTIVE".equals(item);
+        })
+        .blockingSubscribe(item -> LOG.info("Deploying module: " + ivyModule.getName() + ", status: " + item));
   }
 
   @Override

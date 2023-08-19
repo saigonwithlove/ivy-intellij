@@ -1,10 +1,13 @@
 package saigonwithlove.ivy.intellij.devtool;
 
+import com.fasterxml.jackson.core.exc.StreamReadException;
+import com.fasterxml.jackson.databind.DatabindException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import groovy.lang.Newify;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -26,6 +29,7 @@ import lombok.experimental.UtilityClass;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.http.HttpResponse;
+import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.utils.URIBuilder;
@@ -52,7 +56,7 @@ public class IvyDevtools {
   private static final String IVY_DEVTOOL_VERSION_RANGE = "[0.2.3,)";
 
   public static final String IVY_DEVTOOL_PACKAGE_URL =
-      "https://github.com/saigonwithlove/ivy-devtool/releases/download/ivy7/ivy-devtool.iar";
+      "https://github.com/saigonwithlove/ivy-devtool/releases/download/v0.2.4-SNAPSHOT/ivy-devtool-0.2.4-SNAPSHOT.iar";
 
   public static void installIvyDevtool(@NotNull IvyEngine ivyEngine) {
     if (ivyDevtoolExists(ivyEngine) && isIvyDevtoolUpdated(ivyEngine)) {
@@ -293,6 +297,35 @@ public class IvyDevtools {
       return downloadedIarPackage.toFile();
     } catch (IOException ex) {
       throw new RuntimeException("Could not download IAR package.", ex);
+    }
+  }
+
+  public @NotNull static String getModuleStatus(@NotNull IvyEngine ivyEngine, @NotNull String processModelName) {
+    try {
+      String baseIvyEngineUrl =
+          ivyEngine
+              .getUrl()
+              .map(String::valueOf)
+              .orElseThrow(() -> new NoSuchElementException("Could not get URL of Ivy Engine."));
+      URI getModuleStatusUri =
+          new URIBuilder(baseIvyEngineUrl + getIvyDevtoolUrl(ivyEngine))
+              .addParameter("command", "module$status")
+              .addParameter("pm", processModelName)
+              .addParameter("pmv", "1")
+              .build();
+
+      HttpClient client = HttpClientBuilder.create().build();
+      HttpResponse response = client.execute(new HttpGet(getModuleStatusUri));
+      int responseStatus = response.getStatusLine().getStatusCode();
+      if (responseStatus != 200) {
+        throw new RuntimeException("Could not get Module status. Server return error.");
+      }
+      ModuleProcessModelVersionStatusResponse moduleStatus = new ObjectMapper().readValue(response.getEntity().getContent(), ModuleProcessModelVersionStatusResponse.class);
+      return moduleStatus.getStatus();
+    } catch (URISyntaxException ex) {
+      throw new IllegalArgumentException(ex);
+    } catch (IOException e) {
+      throw new RuntimeException(e);
     }
   }
 
