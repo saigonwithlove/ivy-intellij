@@ -1,6 +1,5 @@
 package saigonwithlove.ivy.intellij.toolwindow.engine;
 
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.TextRange;

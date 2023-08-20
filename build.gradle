@@ -10,6 +10,7 @@ buildscript {
 plugins {
     id 'java'
     id 'org.jetbrains.intellij' version '1.15.0'
+    id 'com.diffplug.spotless' version '6.20.0'
 }
 
 group 'saigonwithlove.ivy'
@@ -53,4 +54,10 @@ task proGuard(type: proguard.gradle.ProGuardTask, dependsOn: buildPlugin) {
     keep includedescriptorclasses: true, 'public class saigonwithlove.** { *; }'
     dontobfuscate
     dontwarn
+}
+
+spotless {
+    java {
+        googleJavaFormat().reflowLongStrings()
+    }
 }

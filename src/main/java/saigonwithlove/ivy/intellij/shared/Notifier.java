@@ -10,8 +10,8 @@ import org.jetbrains.annotations.NotNull;
 
 @UtilityClass
 public class Notifier {
-  private static final NotificationGroup GROUP = NotificationGroupManager.getInstance()
-      .getNotificationGroup("Ivy");
+  private static final NotificationGroup GROUP =
+      NotificationGroupManager.getInstance().getNotificationGroup("Ivy");
 
   public static void info(@NotNull Project project, @NotNull String content) {
     GROUP.createNotification(content, NotificationType.INFORMATION).notify(project);

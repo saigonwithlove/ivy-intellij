@@ -3,7 +3,6 @@ package saigonwithlove.ivy.intellij.toolwindow.engine;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.Separator;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.JBColor;
@@ -41,8 +40,7 @@ public class EngineView extends JBPanel<EngineView> {
 
   @NotNull
   private JComponent newContent(@NotNull Project project) {
-    PreferenceService preferenceService =
-        project.getService(PreferenceService.class);
+    PreferenceService preferenceService = project.getService(PreferenceService.class);
 
     // Root wrapper for content
     JBPanel panel = new JBPanel(new GridBagLayout());

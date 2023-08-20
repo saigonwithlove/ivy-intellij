@@ -31,10 +31,12 @@ public class IvyLibraries {
         .forEach(
             jar -> {
               // TODO: workaround, need more thoughtful solution.
-              // The following files has many jars inside it, we need to manually extract the jar files.
+              // The following files has many jars inside it, we need to manually extract the jar
+              // files.
               // This bug happened on Ivy 7 when the project imported Rule Engine.
               if (jar.getPath().contains("ch.ivyteam.ivy.rule.engine.libs")) {
-                modifiableModel.addJarDirectory("file://" + jar.getPath() + ".extracted/libs", false);
+                modifiableModel.addJarDirectory(
+                    "file://" + jar.getPath() + ".extracted/libs", false);
               } else {
                 modifiableModel.addRoot("jar://" + jar.getPath() + "!/", OrderRootType.CLASSES);
               }

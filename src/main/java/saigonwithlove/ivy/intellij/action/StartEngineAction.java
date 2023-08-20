@@ -3,7 +3,6 @@ package saigonwithlove.ivy.intellij.action;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import java.text.MessageFormat;
@@ -62,14 +61,14 @@ public class StartEngineAction extends AnAction {
             item -> {
               LOG.info("Deploy all modules.");
               List<IvyModule> ivyModules = preferenceService.getState().getIvyModules();
-              Comparator<IvyModule> deployOrderComparator = Modules.createIvyModuleDeployOrderComparator(ivyModules);
-              List<IvyModule> sortedIvyModules = ivyModules.stream()
-                  .sorted(deployOrderComparator)
-                  .collect(Collectors.toList());
+              Comparator<IvyModule> deployOrderComparator =
+                  Modules.createIvyModuleDeployOrderComparator(ivyModules);
+              List<IvyModule> sortedIvyModules =
+                  ivyModules.stream().sorted(deployOrderComparator).collect(Collectors.toList());
               sortedIvyModules.forEach(i -> LOG.info(i.getName()));
               // TODO: filter deployed modules.
-              sortedIvyModules
-                  .forEach(ivyModule -> {
+              sortedIvyModules.forEach(
+                  ivyModule -> {
                     LOG.info("Deploy module: " + ivyModule.getName());
                     item.deployIvyModule(ivyModule);
                   });

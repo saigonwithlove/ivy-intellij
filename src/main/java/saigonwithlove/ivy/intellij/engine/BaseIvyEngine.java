@@ -22,7 +22,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Observer;
 import io.reactivex.rxjava3.core.Single;
-import io.reactivex.rxjava3.functions.Predicate;
 import io.reactivex.rxjava3.subjects.BehaviorSubject;
 import io.reactivex.rxjava3.subjects.Subject;
 import java.io.PrintWriter;
@@ -211,10 +210,12 @@ public abstract class BaseIvyEngine implements IvyEngine {
     Flowable.range(0, 30)
         .delay(1, TimeUnit.SECONDS)
         .map(item -> IvyDevtools.getModuleStatus(this, ivyModule.getName()))
-        .takeUntil(item -> {
-          return "ACTIVE".equals(item);
-        })
-        .blockingSubscribe(item -> LOG.info("Deploying module: " + ivyModule.getName() + ", status: " + item));
+        .takeUntil(
+            item -> {
+              return "ACTIVE".equals(item);
+            })
+        .blockingSubscribe(
+            item -> LOG.info("Deploying module: " + ivyModule.getName() + ", status: " + item));
   }
 
   @Override

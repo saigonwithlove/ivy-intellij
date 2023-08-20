@@ -1,17 +1,15 @@
 package saigonwithlove.ivy.intellij.settings;
 
-import static saigonwithlove.ivy.intellij.settings.PreferenceService.State;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.ModuleListener;
 import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.NotNull;
-import saigonwithlove.ivy.intellij.shared.IvyModule;
-import saigonwithlove.ivy.intellij.shared.Modules;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import org.jetbrains.annotations.NotNull;
+import saigonwithlove.ivy.intellij.shared.IvyModule;
+import saigonwithlove.ivy.intellij.shared.Modules;
 
 public class IvyModuleListener implements ModuleListener {
   @Override

@@ -1,7 +1,6 @@
 package saigonwithlove.ivy.intellij.settings;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.libraries.LibraryTable;
@@ -133,7 +132,8 @@ public class InitializationActivity implements StartupActivity {
             IvyEngineFactory ivyEngineFactory = new IvyEngineFactory(ivyEngineDirectory, project);
             IvyEngine engine = ivyEngineFactory.newEngine();
             LOG.info(
-                "Initialize Ivy Engine with Devtool, and other configurations to work with Ivy Plugin.");
+                "Initialize Ivy Engine with Devtool, and other configurations to work with Ivy"
+                    + " Plugin.");
             engine.initialize();
             preferenceService.update(
                 state -> {

@@ -6,7 +6,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.vfs.VirtualFile;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.subjects.CompletableSubject;
@@ -32,7 +31,6 @@ import org.apache.maven.model.Model;
 import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
 import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 @UtilityClass
 public class Modules {
@@ -65,14 +63,14 @@ public class Modules {
         Collator.getInstance().compare(a.getName(), b.getName());
   }
 
-  public static Comparator<IvyModule> createIvyModuleDeployOrderComparator(List<IvyModule> ivyModules) {
+  public static Comparator<IvyModule> createIvyModuleDeployOrderComparator(
+      List<IvyModule> ivyModules) {
     return (@NotNull IvyModule a, @NotNull IvyModule b) -> {
       // The module B depends on module A if A is a dependency of B. In this
       // case, we will put A before B by returning negative value (DESC).
       List<Dependency> bDependencies = getTransitiveIvyDependencies(b, ivyModules);
       boolean isDependOnA =
-          bDependencies.stream()
-              .anyMatch(dependency -> resolveDependency(dependency).test(a));
+          bDependencies.stream().anyMatch(dependency -> resolveDependency(dependency).test(a));
       if (isDependOnA) {
         return -1;
       }
@@ -97,16 +95,20 @@ public class Modules {
 
   /**
    * Return Ivy transitive dependencies of an Ivy module that are existing in the workspace.
-   * @param ivyModule   the Ivy module to get Ivy transitive dependencies.
-   * @param ivyModules  list of Ivy modules in the workspace.
-   * @return            Ivy transitive dependencies in the workspace.
+   *
+   * @param ivyModule the Ivy module to get Ivy transitive dependencies.
+   * @param ivyModules list of Ivy modules in the workspace.
+   * @return Ivy transitive dependencies in the workspace.
    */
   @NotNull
-  public static List<Dependency> getTransitiveIvyDependencies(@NotNull IvyModule ivyModule, @NotNull List<IvyModule> ivyModules) {
-    Function<Model, List<Dependency>> existingIvyDependenciesMapper = model -> model.getDependencies().stream()
-        .filter(dependency -> IVY_PACKAGE_EXTENSION.equalsIgnoreCase(dependency.getType()))
-        .filter(dependency -> ivyModules.stream().anyMatch(resolveDependency(dependency)))
-        .collect(Collectors.toList());
+  public static List<Dependency> getTransitiveIvyDependencies(
+      @NotNull IvyModule ivyModule, @NotNull List<IvyModule> ivyModules) {
+    Function<Model, List<Dependency>> existingIvyDependenciesMapper =
+        model ->
+            model.getDependencies().stream()
+                .filter(dependency -> IVY_PACKAGE_EXTENSION.equalsIgnoreCase(dependency.getType()))
+                .filter(dependency -> ivyModules.stream().anyMatch(resolveDependency(dependency)))
+                .collect(Collectors.toList());
 
     // Store all transitive Ivy dependencies.
     List<Dependency> transitiveIvyDependencies = new ArrayList<>();
@@ -119,14 +121,19 @@ public class Modules {
       // Get all Ivy dependencies of current module.
       List<Dependency> directIvyDependencies = existingIvyDependenciesMapper.apply(currentModel);
       for (Dependency dependency : directIvyDependencies) {
-        // Add to transitive dependencies when the module exists in workspace and didn't add to transitive dependencies.
+        // Add to transitive dependencies when the module exists in workspace and didn't add to
+        // transitive dependencies.
         // The dependencies also added to queue to get next transitive dependencies.
-        if (transitiveIvyDependencies.stream().noneMatch(item -> item.getArtifactId().equals(dependency.getArtifactId()))) {
+        if (transitiveIvyDependencies.stream()
+            .noneMatch(item -> item.getArtifactId().equals(dependency.getArtifactId()))) {
           transitiveIvyDependencies.add(dependency);
-          Model model = ivyModules.stream()
-              .map(IvyModule::getMavenModel)
-              .filter(mavenModel -> mavenModel.getArtifactId().equals(dependency.getArtifactId()))
-              .findFirst().orElseThrow();
+          Model model =
+              ivyModules.stream()
+                  .map(IvyModule::getMavenModel)
+                  .filter(
+                      mavenModel -> mavenModel.getArtifactId().equals(dependency.getArtifactId()))
+                  .findFirst()
+                  .orElseThrow();
           processingModels.add(model);
         }
       }
@@ -141,8 +148,8 @@ public class Modules {
         return dependency.getGroupId().equals(ivyModule.getMavenModel().getGroupId())
             && dependency.getArtifactId().equals(ivyModule.getMavenModel().getArtifactId())
             && VersionRange.createFromVersionSpec(dependency.getVersion())
-            .containsVersion(
-                new DefaultArtifactVersion(ivyModule.getMavenModel().getVersion()));
+                .containsVersion(
+                    new DefaultArtifactVersion(ivyModule.getMavenModel().getVersion()));
       } catch (InvalidVersionSpecificationException ex) {
         LOG.error(ex);
         return false;

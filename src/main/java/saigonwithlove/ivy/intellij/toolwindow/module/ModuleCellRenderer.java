@@ -1,7 +1,6 @@
 package saigonwithlove.ivy.intellij.toolwindow.module;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.ColoredListCellRenderer;

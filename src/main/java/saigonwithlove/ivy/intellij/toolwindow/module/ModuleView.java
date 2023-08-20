@@ -2,7 +2,6 @@ package saigonwithlove.ivy.intellij.toolwindow.module;
 
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.CollectionListModel;
@@ -35,8 +34,7 @@ public class ModuleView extends JBPanel<ModuleView> {
   @NotNull
   private JComponent newContent(@NotNull Project project, @NotNull JBList<IvyModule> modules) {
     JBPanel panel = new JBPanel(new GridBagLayout());
-    PreferenceService preferenceService =
-        project.getService(PreferenceService.class);
+    PreferenceService preferenceService = project.getService(PreferenceService.class);
     PreferenceService.State state = preferenceService.getState();
     CollectionListModel<IvyModule> model = new CollectionListModel<>(state.getIvyModules());
     preferenceService

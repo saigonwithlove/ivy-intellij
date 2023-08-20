@@ -1,13 +1,10 @@
 package saigonwithlove.ivy.intellij.devtool;
 
-import com.fasterxml.jackson.core.exc.StreamReadException;
-import com.fasterxml.jackson.databind.DatabindException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import groovy.lang.Newify;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -29,7 +26,6 @@ import lombok.experimental.UtilityClass;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.http.HttpResponse;
-import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.utils.URIBuilder;
@@ -300,7 +296,9 @@ public class IvyDevtools {
     }
   }
 
-  public @NotNull static String getModuleStatus(@NotNull IvyEngine ivyEngine, @NotNull String processModelName) {
+  @NotNull
+  public static String getModuleStatus(
+      @NotNull IvyEngine ivyEngine, @NotNull String processModelName) {
     try {
       String baseIvyEngineUrl =
           ivyEngine
@@ -320,7 +318,10 @@ public class IvyDevtools {
       if (responseStatus != 200) {
         throw new RuntimeException("Could not get Module status. Server return error.");
       }
-      ModuleProcessModelVersionStatusResponse moduleStatus = new ObjectMapper().readValue(response.getEntity().getContent(), ModuleProcessModelVersionStatusResponse.class);
+      ModuleProcessModelVersionStatusResponse moduleStatus =
+          new ObjectMapper()
+              .readValue(
+                  response.getEntity().getContent(), ModuleProcessModelVersionStatusResponse.class);
       return moduleStatus.getStatus();
     } catch (URISyntaxException ex) {
       throw new IllegalArgumentException(ex);
