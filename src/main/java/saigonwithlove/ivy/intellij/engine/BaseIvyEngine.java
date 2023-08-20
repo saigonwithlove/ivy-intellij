@@ -207,7 +207,7 @@ public abstract class BaseIvyEngine implements IvyEngine {
   @Override
   public void deployIvyModule(@NotNull IvyModule ivyModule) {
     IvyDevtools.deployIvyModule(this, ivyModule);
-    Flowable.range(0, 30)
+    Flowable.range(0, 120)
         .delay(1, TimeUnit.SECONDS)
         .map(item -> IvyDevtools.getModuleStatus(this, ivyModule.getName()))
         .takeUntil(
