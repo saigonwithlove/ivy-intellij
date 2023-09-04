@@ -6,11 +6,9 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import java.text.MessageFormat;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import saigonwithlove.ivy.intellij.engine.IvyEngine;
@@ -56,16 +54,12 @@ public class StartEngineAction extends AnAction {
 
     ivyEngine
         .start()
-        .timeout(120, TimeUnit.SECONDS)
+        .timeout(300, TimeUnit.SECONDS)
         .doOnSuccess(
             item -> {
               LOG.info("Deploy all modules.");
               List<IvyModule> ivyModules = preferenceService.getState().getIvyModules();
-              Comparator<IvyModule> deployOrderComparator =
-                  Modules.createIvyModuleDeployOrderComparator(ivyModules);
-              List<IvyModule> sortedIvyModules =
-                  ivyModules.stream().sorted(deployOrderComparator).collect(Collectors.toList());
-              sortedIvyModules.forEach(i -> LOG.info(i.getName()));
+              List<IvyModule> sortedIvyModules = Modules.sortByDeploymentOrder(ivyModules);
               // TODO: filter deployed modules.
               sortedIvyModules.forEach(
                   ivyModule -> {

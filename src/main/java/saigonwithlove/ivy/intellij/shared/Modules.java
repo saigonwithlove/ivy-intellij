@@ -63,18 +63,27 @@ public class Modules {
         Collator.getInstance().compare(a.getName(), b.getName());
   }
 
-  public static Comparator<IvyModule> createIvyModuleDeployOrderComparator(
+  public static Comparator<IvyModule> createIvyModuleDependencyOrderComparator(
       List<IvyModule> ivyModules) {
     return (@NotNull IvyModule a, @NotNull IvyModule b) -> {
-      // The module B depends on module A if A is a dependency of B. In this
-      // case, we will put A before B by returning negative value (DESC).
       List<Dependency> bDependencies = getTransitiveIvyDependencies(b, ivyModules);
-      boolean isDependOnA =
+      boolean bDependsOnA =
           bDependencies.stream().anyMatch(dependency -> resolveDependency(dependency).test(a));
-      if (isDependOnA) {
+      if (bDependsOnA) {
+        // The module B depends on module A if A is a dependency of B. In this
+        // case, we will put A before B by returning negative value (DESC).
+        LOG.info(b.getName() + " depends on " + a.getName());
+        return 1;
+      }
+      List<Dependency> aDependencies = getTransitiveIvyDependencies(a, ivyModules);
+      boolean aDependsOnB =
+          aDependencies.stream().anyMatch(dependency -> resolveDependency(dependency).test(b));
+      if (aDependsOnB) {
+        LOG.info(a.getName() + " depends on " + b.getName());
         return -1;
       }
-      return 1;
+      LOG.info(a.getName() + " and " + b.getName() + " are independent.");
+      return 0;
     };
   }
 
@@ -138,6 +147,8 @@ public class Modules {
         }
       }
     } while (!processingModels.isEmpty());
+    LOG.info("Resolve Ivy transitive dependencies for module: " + ivyModule.getName());
+    transitiveIvyDependencies.forEach(item -> LOG.info(item.getArtifactId()));
     return transitiveIvyDependencies;
   }
 
@@ -197,5 +208,15 @@ public class Modules {
         };
     CompilerManager.getInstance(project).make(ivyModule.getModule(), notification);
     return completableSubject;
+  }
+
+  public static List<IvyModule> sortByDeploymentOrder(List<IvyModule> ivyModules) {
+    Comparator<IvyModule> dependencyOrderComparator =
+        Modules.createIvyModuleDependencyOrderComparator(ivyModules);
+    List<IvyModule> sortedIvyModules = new ArrayList<>(ivyModules);
+    sortedIvyModules.sort(dependencyOrderComparator);
+    Collections.reverse(sortedIvyModules);
+    sortedIvyModules.forEach(i -> LOG.info(i.getName()));
+    return sortedIvyModules;
   }
 }
