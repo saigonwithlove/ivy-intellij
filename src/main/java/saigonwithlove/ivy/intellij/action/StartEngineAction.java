@@ -57,24 +57,32 @@ public class StartEngineAction extends AnAction {
         .timeout(300, TimeUnit.SECONDS)
         .doOnSuccess(
             item -> {
-              LOG.info("Deploy all modules.");
-              List<IvyModule> ivyModules = preferenceService.getState().getIvyModules();
-              List<IvyModule> sortedIvyModules = Modules.sortByDeploymentOrder(ivyModules);
-              // TODO: filter deployed modules.
-              sortedIvyModules.forEach(
-                  ivyModule -> {
-                    LOG.info("Deploy module: " + ivyModule.getName());
-                    item.deployIvyModule(ivyModule);
-                  });
+              if (preferenceService.getState().isDeployIvyModulesWhenIvyEngineStarted()) {
+                LOG.info("Deploy all modules.");
+                List<IvyModule> ivyModules = preferenceService.getState().getIvyModules();
+                List<IvyModule> sortedIvyModules = Modules.sortByDeploymentOrder(ivyModules);
+                // TODO: filter deployed modules.
+                sortedIvyModules.forEach(
+                    ivyModule -> {
+                      LOG.info("Deploy module: " + ivyModule.getName());
+                      item.deployIvyModule(ivyModule);
+                    });
+              } else {
+                LOG.info("Deploy modules on start was disabled.");
+              }
             })
         .doOnSuccess(
             item -> {
-              LOG.info("Update global variables.");
-              Map<String, Configuration> globalVariables =
-                  preferenceService.getState().getGlobalVariables();
-              globalVariables.values().stream()
-                  .filter(Configuration::isModified)
-                  .forEach(item::updateGlobalVariable);
+              if (preferenceService.getState().isDeployIvyModulesWhenIvyEngineStarted()) {
+                LOG.info("Update global variables.");
+                Map<String, Configuration> globalVariables =
+                    preferenceService.getState().getGlobalVariables();
+                globalVariables.values().stream()
+                    .filter(Configuration::isModified)
+                    .forEach(item::updateGlobalVariable);
+              } else {
+                LOG.info("No need to update the global variables.");
+              }
             })
         .subscribe(
             item -> {

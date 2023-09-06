@@ -64,6 +64,7 @@ public class PreferenceService implements PersistentStateComponent<PreferenceSer
   public static class State {
     private boolean pluginEnabled;
     private String ivyEngineDirectory;
+    private boolean deployIvyModulesWhenIvyEngineStarted;
     private Map<String, Configuration> globalVariables = new HashMap<>();
     private Map<String, Configuration> serverProperties = new HashMap<>();
     private Map<String, List<String>> ivyLibraries = new HashMap<>();
