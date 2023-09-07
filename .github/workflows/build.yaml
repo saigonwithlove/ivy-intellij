@@ -34,3 +34,4 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           tag: "snapshot"
           files: "build/distributions/ivy-intellij-*.zip"
+          rm: true
