@@ -96,8 +96,6 @@ public abstract class BaseIvyEngine implements IvyEngine {
           .toSingle();
     }
 
-    // Common technique was used in JavaScript to hold the "this" reference.
-    IvyEngine self = this;
     GeneralCommandLine commandLine =
         new GeneralCommandLine(this.directory + "/" + this.definition.getStartCommand())
             .withEnvironment("JAVA_HOME", this.getCompatibleJavaHome(definition.getJdkVersion()))
@@ -112,7 +110,7 @@ public abstract class BaseIvyEngine implements IvyEngine {
                   port = -1;
                   status = Status.STARTING;
                   LOG.info("Set Ivy Engine status to " + status + " and port to " + port);
-                  ivyEngineSubject.onNext(self);
+                  ivyEngineSubject.onNext(BaseIvyEngine.this);
                 }
 
                 @Override
@@ -121,7 +119,7 @@ public abstract class BaseIvyEngine implements IvyEngine {
                   port = -1;
                   status = Status.STOPPING;
                   LOG.info("Ivy Engine is " + status);
-                  ivyEngineSubject.onNext(self);
+                  ivyEngineSubject.onNext(BaseIvyEngine.this);
                 }
 
                 @Override
@@ -129,7 +127,7 @@ public abstract class BaseIvyEngine implements IvyEngine {
                   LOG.info("Set Ivy Engine port to -1 when Ivy Engine is STOPPED.");
                   port = -1;
                   status = Status.STOPPED;
-                  ivyEngineSubject.onNext(self);
+                  ivyEngineSubject.onNext(BaseIvyEngine.this);
                 }
 
                 @Override
@@ -142,7 +140,7 @@ public abstract class BaseIvyEngine implements IvyEngine {
                       int newPort = Integer.parseInt(matcher.group(1));
                       port = newPort;
                       LOG.info("Axon.ivy Engine is running on port: " + newPort);
-                      ivyEngineSubject.onNext(self);
+                      ivyEngineSubject.onNext(BaseIvyEngine.this);
                     }
                   }
 
@@ -153,7 +151,7 @@ public abstract class BaseIvyEngine implements IvyEngine {
                   if (status == Status.STARTING && text.contains(READY_TEXT)) {
                     status = Status.RUNNING;
                     LOG.info("Axon.ivy Engine is " + status);
-                    ivyEngineSubject.onNext(self);
+                    ivyEngineSubject.onNext(BaseIvyEngine.this);
                   }
                 }
               };
