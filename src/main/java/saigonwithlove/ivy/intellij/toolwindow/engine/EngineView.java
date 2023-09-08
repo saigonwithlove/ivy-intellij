@@ -23,6 +23,7 @@ import javax.swing.tree.MutableTreeNode;
 import org.jetbrains.annotations.NotNull;
 import saigonwithlove.ivy.intellij.action.OpenSettingsAction;
 import saigonwithlove.ivy.intellij.action.StartEngineAction;
+import saigonwithlove.ivy.intellij.action.UpdateGlobalVariablesAndServerPropertiesAction;
 import saigonwithlove.ivy.intellij.settings.CacheObserver;
 import saigonwithlove.ivy.intellij.settings.PreferenceService;
 import saigonwithlove.ivy.intellij.shared.Configuration;
@@ -122,6 +123,8 @@ public class EngineView extends JBPanel<EngineView> {
 
     // Start Engine
     actions.add(new StartEngineAction(project));
+    // Update global variables and system properties
+    actions.add(new UpdateGlobalVariablesAndServerPropertiesAction(project));
 
     // Setting
     actions.add(new Separator());
