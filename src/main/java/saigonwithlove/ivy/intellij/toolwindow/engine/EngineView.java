@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SideBorder;
 import com.intellij.ui.TreeSpeedSearch;
+import com.intellij.ui.TreeUIHelper;
 import com.intellij.ui.components.JBPanel;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.treeStructure.Tree;
@@ -79,7 +80,8 @@ public class EngineView extends JBPanel<EngineView> {
     constraints.anchor = GridBagConstraints.FIRST_LINE_START;
     constraints.fill = GridBagConstraints.BOTH;
     constraints.weightx = constraints.weighty = 1.0;
-    panel.add(new TreeSpeedSearch(tree).getComponent(), constraints);
+    TreeUIHelper.getInstance().installTreeSpeedSearch(tree);
+    panel.add(tree, constraints);
 
     JBScrollPane scrollPanel = new JBScrollPane(panel);
     scrollPanel.setBorder(new SideBorder(JBColor.border(), SideBorder.LEFT));

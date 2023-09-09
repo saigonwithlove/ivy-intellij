@@ -29,17 +29,19 @@ public class IvyModuleListener implements ModuleListener {
   }
 
   @Override
-  public void moduleAdded(@NotNull Project project, @NotNull Module module) {
-    Optional<IvyModule> importModule = Modules.toIvyModule(module);
-    if (importModule.isPresent()) {
-      PreferenceService preferenceService = project.getService(PreferenceService.class);
-      List<IvyModule> allModules = new ArrayList<>(preferenceService.getState().getIvyModules());
-      allModules.add(importModule.get());
-      preferenceService.update(
-          (state -> {
-            state.setIvyModules(allModules);
-            return state;
-          }));
+  public void modulesAdded(@NotNull Project project, @NotNull List<Module> modules) {
+    for (Module module : modules) {
+      Optional<IvyModule> importModule = Modules.toIvyModule(module);
+      if (importModule.isPresent()) {
+        PreferenceService preferenceService = project.getService(PreferenceService.class);
+        List<IvyModule> allModules = new ArrayList<>(preferenceService.getState().getIvyModules());
+        allModules.add(importModule.get());
+        preferenceService.update(
+            (state -> {
+              state.setIvyModules(allModules);
+              return state;
+            }));
+      }
     }
   }
 }

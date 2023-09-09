@@ -17,15 +17,13 @@ public class IvyToolWindowFactory implements ToolWindowFactory {
   public void createToolWindowContent(@NotNull Project project, @NotNull ToolWindow toolWindow) {
     EngineView engineView = new EngineView(project);
     Content engineViewContent =
-        ContentFactory.SERVICE
-            .getInstance()
+        ContentFactory.getInstance()
             .createContent(engineView, IvyBundle.message("toolWindow.engine.title"), false);
     toolWindow.getContentManager().addContent(engineViewContent);
 
     ModuleView moduleView = new ModuleView(project);
     Content moduleViewContent =
-        ContentFactory.SERVICE
-            .getInstance()
+        ContentFactory.getInstance()
             .createContent(moduleView, IvyBundle.message("toolWindow.module.title"), false);
     toolWindow.getContentManager().addContent(moduleViewContent);
   }
