@@ -34,9 +34,9 @@ public class DeployModuleAction extends AnAction {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent event) {
-    IvyModule selectedIvyModule = modules.getSelectedValue();
+    IvyModule selectedIvyModule = this.modules.getSelectedValue();
     if (Objects.isNull(selectedIvyModule)) {
-      Notifier.info(project, IvyBundle.message("notification.deployModuleNotSelected"));
+      Notifier.info(this.project, IvyBundle.message("notification.deployModuleNotSelected"));
       return;
     }
 
@@ -47,9 +47,9 @@ public class DeployModuleAction extends AnAction {
     }
 
     // Deploy to Ivy Engine
-    Task syncModuleTask = newDeployModuleTask(project, ivyEngine, selectedIvyModule);
+    Task syncModuleTask = newDeployModuleTask(this.project, ivyEngine, selectedIvyModule);
     // Compile Java code
-    Modules.compile(project, selectedIvyModule)
+    Modules.compile(this.project, selectedIvyModule)
         .subscribe(() -> ProgressManager.getInstance().run(syncModuleTask));
   }
 
@@ -60,12 +60,10 @@ public class DeployModuleAction extends AnAction {
         project, IvyBundle.message("tasks.syncModule.title", ivyModule.getName())) {
       @Override
       public void run(@NotNull ProgressIndicator progressIndicator) {
-        // TODO change the notification to match with current context.
-        progressIndicator.setFraction(0.1);
+        progressIndicator.setIndeterminate(false);
         progressIndicator.setText(
-            IvyBundle.message("tasks.reloadModule.progress.connecting", ivyModule.getName()));
+            IvyBundle.message("tasks.reloadModule.progress.deploying", ivyModule.getName()));
         ivyEngine.deployIvyModule(ivyModule);
-        progressIndicator.setFraction(1);
       }
     };
   }
