@@ -27,6 +27,23 @@
   </actions>
 
   <change-notes><![CDATA[
+    <h3>v0.2.7 - 2023-09-11</h3>
+    <h4>Added</h4>
+    <ul>
+      <li>Setting for deploy Ivy modules when Ivy Engine started.</li>
+    </ul>
+
+    <h4>Fixed</h4>
+    <ul>
+      <li>Unstable deployment on starting Engine.</li>
+      <li>Support Axon.ivy Engine 6.3.0:
+        <ul>
+          <li>Provide built-in libraries.</li>
+        </ul>
+      </li>
+      <li>Some improvements on the notification and progress bar.</li>
+    </ul>
+
     <h3>v0.2.6 - 2023-08-14</h3>
     <h4>Changed</h4>
     <ul>

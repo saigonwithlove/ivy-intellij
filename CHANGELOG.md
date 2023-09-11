@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## v0.2.7 - unreleased
+## v0.2.7 - 2023-09-11
 
 ### Added
 - Setting for deploy Ivy modules when Ivy Engine started.
@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Unstable deployment on starting Engine.
 - Support Axon.ivy Engine 6.3.0:
   - Provide built-in libraries.
+- Some improvements on the notification and progress bar.
 
 ## v0.2.6 - 2023-08-14
 ### Changed
