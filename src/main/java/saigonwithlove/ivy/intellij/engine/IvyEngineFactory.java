@@ -54,6 +54,13 @@ public class IvyEngineFactory {
           .definition(this.definition)
           .project(this.project)
           .build();
+    } else if (this.version.getMajorVersion() == 10) {
+      return Ivy10Engine.builder()
+          .directory(this.directory)
+          .version(this.version)
+          .definition(this.definition)
+          .project(this.project)
+          .build();
     }
     throw new NoSuchElementException("Could not create Engine with version: " + this.version);
   }

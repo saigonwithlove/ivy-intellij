@@ -42,7 +42,13 @@ public enum IvyEngineDefinition {
       Arrays.asList(Ivy8Library.values()),
       "system/configuration/org.eclipse.osgi",
       "work/demo-applications/demo-portal",
-      JavaSdkVersion.JDK_11);
+      JavaSdkVersion.JDK_11),
+  IVY10(
+      new DefaultArtifactVersion("10.0.0"),
+      Arrays.asList(Ivy10Library.values()),
+      "system/configuration/org.eclipse.osgi",
+      "work/demo-applications/demo-portal",
+      JavaSdkVersion.JDK_17);
 
   private final ArtifactVersion version;
   private final List<IvyLibrary> libraries;

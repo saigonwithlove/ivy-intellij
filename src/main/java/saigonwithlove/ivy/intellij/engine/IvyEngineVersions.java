@@ -4,6 +4,7 @@ import java.io.File;
 import java.util.Arrays;
 import java.util.NoSuchElementException;
 import java.util.Objects;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 import lombok.experimental.UtilityClass;
 import org.apache.commons.lang3.ArrayUtils;
@@ -14,6 +15,8 @@ import org.jetbrains.annotations.NotNull;
 
 @UtilityClass
 public class IvyEngineVersions {
+  private static final Pattern UTIL_FILENAME_PATTERN = Pattern.compile("^ch\\.ivyteam\\.util[_-]");
+
   @NotNull
   public static ArtifactVersion parseVersion(@NotNull String ivyEngineDirectory) {
     String libraryFileName =
@@ -22,7 +25,8 @@ public class IvyEngineVersions {
             .map(File::list)
             .filter(Objects::nonNull)
             .flatMap(Arrays::stream)
-            .filter(fileName -> fileName.toLowerCase().startsWith("ch.ivyteam.util"))
+            .filter(fileName -> UTIL_FILENAME_PATTERN.asPredicate().test(fileName))
+            .sorted()
             .findFirst()
             .orElseThrow(() -> new NoSuchElementException("Cannot find Ivy Engine library."));
     String version = libraryFileName.substring("ch.ivyteam.util".length() + 1);
@@ -33,7 +37,7 @@ public class IvyEngineVersions {
   private String toReleaseVersion(@NotNull String version) { // 6.1.0.51869 -> 6.1.0
     String[] versionParts = StringUtils.split(version, ".");
     if (ArrayUtils.isEmpty(versionParts)) {
-      throw new NoSuchElementException("Connt parse Ivy Engine version.");
+      throw new NoSuchElementException("Could not parse Ivy Engine version.");
     }
     return StringUtils.join(versionParts, ".", 0, Math.min(versionParts.length, 3));
   }
